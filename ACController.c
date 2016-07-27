@@ -1,4 +1,3 @@
-
 #include "ACController.h"
 
 /*****************Config bit settings****************/
@@ -34,11 +33,13 @@ volatile SavedValuesStruct2 savedValues2 = {
 };
 #else
 const SavedValuesStruct savedValuesDefault = {
-	DEFAULT_MOTOR_TYPE,DEFAULT_KP,DEFAULT_KI,DEFAULT_CURRENT_SENSOR_AMPS_PER_VOLT,25,400,624,972,5,MAX_BATTERY_AMPS,MAX_BATTERY_AMPS_REGEN,MAX_MOTOR_AMPS,MAX_MOTOR_AMPS,DEFAULT_PRECHARGE_TIME,{0},0
+//	DEFAULT_MOTOR_TYPE,DEFAULT_KP,DEFAULT_KI,DEFAULT_CURRENT_SENSOR_AMPS_PER_VOLT,25,400,624,972,5,MAX_BATTERY_AMPS,MAX_BATTERY_AMPS_REGEN,MAX_MOTOR_AMPS,MAX_MOTOR_AMPS,DEFAULT_PRECHARGE_TIME,{0},0
+	DEFAULT_MOTOR_TYPE,DEFAULT_KP,DEFAULT_KI,DEFAULT_CURRENT_SENSOR_AMPS_PER_VOLT,4,5,200,900,3,MAX_BATTERY_AMPS,MAX_BATTERY_AMPS_REGEN,MAX_MOTOR_AMPS,MAX_MOTOR_AMPS,DEFAULT_PRECHARGE_TIME,{0},0
 };
 
 volatile SavedValuesStruct savedValues = {
-	DEFAULT_MOTOR_TYPE,DEFAULT_KP,DEFAULT_KI,DEFAULT_CURRENT_SENSOR_AMPS_PER_VOLT,25,400,624,972,5,MAX_BATTERY_AMPS,MAX_BATTERY_AMPS_REGEN,MAX_MOTOR_AMPS,MAX_MOTOR_AMPS,DEFAULT_PRECHARGE_TIME,{0},0
+//	DEFAULT_MOTOR_TYPE,DEFAULT_KP,DEFAULT_KI,DEFAULT_CURRENT_SENSOR_AMPS_PER_VOLT,25,400,624,972,5,MAX_BATTERY_AMPS,MAX_BATTERY_AMPS_REGEN,MAX_MOTOR_AMPS,MAX_MOTOR_AMPS,DEFAULT_PRECHARGE_TIME,{0},0
+	DEFAULT_MOTOR_TYPE,DEFAULT_KP,DEFAULT_KI,DEFAULT_CURRENT_SENSOR_AMPS_PER_VOLT,4,5,200,900,3,MAX_BATTERY_AMPS,MAX_BATTERY_AMPS_REGEN,MAX_MOTOR_AMPS,MAX_MOTOR_AMPS,DEFAULT_PRECHARGE_TIME,{0},0
 };
 
 const SavedValuesStruct2 savedValuesDefault2 = {
@@ -47,9 +48,10 @@ const SavedValuesStruct2 savedValuesDefault2 = {
 volatile SavedValuesStruct2 savedValues2 = {
 	DEFAULT_ANGLE_OFFSET, DEFAULT_ROTOR_TIME_CONSTANT_INDEX,DEFAULT_NUM_POLE_PAIRS,DEFAULT_MAX_MECHANICAL_RPM,DEFAULT_THROTTLE_TYPE, DEFAULT_ENCODER_TICKS,DEFAULT_DATA_TO_DISPLAY_SET1, DEFAULT_DATA_TO_DISPLAY_SET2,0,{0,0,0,0,0,0}, 0
 };
-
 #endif
 
+// this is for computing the mechanicalRPM of an induction motor.  You let the 10kHz ISR run for revCounterMax number of times, and then measure the encoder position.  Whatever the encoder position is, is the 16 times the mechanical revolutions per second! 
+// It has to be initialized though, so here we are, initializing it...
 unsigned int revCounterMax = 160000L/(4*DEFAULT_ENCODER_TICKS);  // revCounterMax = 160000L / (4*savedValues2.encoderTicks);  // 4* because I'm doing 4 times resolution for the encoder. 16,000,000 because revolutions per 16 seconds is computed as:  16*10,000*poscnt * rev/(maxPosCnt*revcounter*(16sec))
 
 // This is always a copy of the data that's in the EE PROM.
@@ -67,7 +69,7 @@ _prog_addressT EE_addr4 = 0x7ffc60;
 
 // celciusToResistance[0] is the resistance in Ohms that corresponds to 0 degrees celcius.  celciusToResistance[59] is the resistance in Ohms that corresponds to 59 degrees celcius.
 // the range is 0 celcius to 126 degrees celcius.
-//									0, 		1,	2,		3,	4,		5,	6,		7,	8,		9,	10,		11,	12,		13,	14,		15,	16,		17,	18,		19,	20,		21,	22,		23,	24,		25,	26,	27,	  28,	29, 30,  31,   32,  33,  34,  35,  36,  37,  38,  39,  40,  41,  42,  43,  44,  45,  46,  47,  48,  49,  50,  51,  52,  53,  54,  55,  56,  57,  58,  59,  60,  61,  62,  63,  64,  65,  66,  67,  68,  69,  70,
+// degrees celcius: 				0, 		1,	2,		3,	4,		5,	6,		7,	8,		9,	10,		11,	12,		13,	14,		15,	16,		17,	18,		19,	20,		21,	22,		23,	24,		25,	26,	27,	  28,	29, 30,  31,   32,  33,  34,  35,  36,  37,  38,  39,  40,  41,  42,  43,  44,  45,  46,  47,  48,  49,  50,  51,  52,  53,  54,  55,  56,  57,  58,  59,  60,  61,  62,  63,  64,  65,  66,  67,  68,  69,  70,  71,  72,  73,  74,  75,  76,  77,  78,  79,  80,  81,  82,  83,  84,  85,  86,  87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,
 const int celciusToResistance[] = {32624,31175,29727,28278,26830,25381,24284,23187,22091,20994,19897,19060,18223,17385,16548,15711,15067,14424,13780,13137,12493,11994,11496,10997,10499,10000,9611,9222,8834,8445,8056,7751,7445,7140,6835,6530,6289,6047,5806,5565,5324,5132,4940,4749,4557,4365,4212,4059,3905,3752,3599,3475,3352,3229,3106,2982,2883,2783,2683,2584,2484,2403,2322,2241,2160,2079,2013,1946,1880,1814,1748,1693,1639,1585,1530,1476,1431,1386,1341,1297,1252,1215,1178,1140,1103,1066,1035,1004,973,942,912,886,860,834,808,782,761,739,717,696,674,656,638,619,601,583,567,552,537,521,506,493,479,466,453,440,429,418,407,396,384,375,365,356,346,337,327,
 };
 
@@ -170,7 +172,9 @@ const int _sin_times32768[] =
 -4410,	-4011,	-3612,	-3212,	-2811,	-2410,	-2009,	-1608,	-1206,	-804,	-402, 		0,		0,		0,		0,		0,		0,		0,		0,};
 ////////////////////////////////////////////////////////////////
 
-volatile int bigArray[514];
+//volatile int bigArray1[255];
+//volatile int bigArray2[255];
+
 volatile rotorTestType myRotorTest = {0,0,0,DEFAULT_ROTOR_TIME_CONSTANT_INDEX,0,0};
 volatile angleOffsetTestType myAngleOffsetTest     = {0,0,0,0,0,0,0};
 volatile motorSaliencyTestType myMotorSaliencyTest = {0,0,0,0,0,0,0};
@@ -203,7 +207,6 @@ volatile unsigned int counter10k = 0;
 volatile unsigned int faultBits = STARTUP_FAULT;
 volatile int vRef1 = 512, vRef2 = 512;  // these are temporary values for "zero current feedback".  The real values will be computed later, but this is close, since zero current corresponds to 2.5v on the current sensor.
 
-volatile long throttleSum = 0;
 volatile int throttle = 0, rawThrottle = 0;
 volatile int throttleFaultCounter = 0;
 
@@ -214,12 +217,12 @@ volatile int batteryAmps = 0;
 volatile int maxBatteryCurrentNormalized = 0;
 volatile int maxBatteryCurrentNormalizedRegen = 0;
 volatile int normalizedToAmpsMultiplier = 0;
-volatile long batteryCurrentSum = 0;
 
-volatile int temperatureMultiplier = 8;
 volatile int temperatureBasePlate = 0;
 
 volatile int ADCurrent1 = 0, ADCurrent2 = 0;
+volatile int newADValuesAvailable = 0;
+volatile int currentMaxIterationsBeforeZeroCrossing = 20;		// used in the PI loop test.  How many iteratiosn is too many for Iq to go from 0 to IqRef?  I call it zero crossing, because I'm looking at the error = IqRef - Iq.
 
 // _ADInterrupt() variables
 volatile int i_alpha = 0;
@@ -244,6 +247,10 @@ volatile int currentRadiusRefRefOverSqrt2 = 0;
 volatile int K = 0;
 volatile long int KLong = 0L;
 
+volatile int captureData = 0;
+volatile int dataCaptureIndex = 0;
+
+
 extern char intString[];
 
 extern void u16_to_str(char *str, unsigned val, unsigned char digits);
@@ -267,12 +274,23 @@ void InitPIStruct();
 void ClearAllFaults();  // clear the flip flop fault and the desat fault.
 void ClearDesatFault();
 void ClearFlipFlop();
-void ComputeRotorFluxAngle();
-void ComputeRotorFluxAngleSensorless();
+void ComputePositionAndSpeed();
+void ComputePositionAndSpeedSensorless();
 void SpaceVectorModulation();
 void ClampVdVq();
 void Delay1uS();
 void GrabDataSnapshot();
+void ComputeZeroCurrentOffsets();
+void ChargeUpCapacitorBank();
+void UpdateCounter1k();
+void RunPITest();
+
+void GetCurrentRadiusRefRef();
+void UpdateDataStream();
+void DisplayTestResults();
+void CheckForFaults();
+void DisplayFaultMessages();
+void RunMotorSaliencyTest();
 
 void __attribute__ ((__interrupt__,auto_psv)) _CNInterrupt(void);
 void __attribute__ ((__interrupt__,auto_psv)) _ADCInterrupt(void);
@@ -289,200 +307,29 @@ int unknownTriangleLeg(int c, int b);
 
 
 int main() {
-	int i = 0;
-	unsigned int now = 0;
-	long int vRef1Sum = 0;
-	long int vRef2Sum = 0;
-	int localCurrent1 = 0;
-	int localCurrent2 = 0;
-	unsigned int notShownFaultYet = 0x0FFFF;	
-
-
 	InitIORegisters();
 	InitTimers();  // Now timer1 is running at around 59KHz.
-	DelayTenthsSecond(5); 
-	// Let voltages settle.
-	O_LAT_PRECHARGE_RELAY = 1;  // turn on precharge relay.
+	DelayTenthsSecond(5); // Let voltages settle.
 
-	MoveDataFromEEPromToRAM();
-
-	InitCNModule();
+	MoveDataFromEEPromToRAM();  // load the saved configuation values, if any.
+	InitCNModule();  // Turn on the change notification module.
 	InitializeThrottleAndCurrentVariables();
 	InitPIStruct();
 	InitADAndPWM();		// Now the A/D is triggered by the pwm period, and the PWM interrupt is enabled.
 	InitQEI();
 	InitUART2();  // Now the UART is running.
-	
-	for (i = 0; i < 256; i++) {
-		now = counter10k;
-		while (counter10k == now) {
-			ClrWdt();
-		} // a new A/D value will be available.
-		localCurrent1 = ADCurrent1;
-		localCurrent2 = ADCurrent2;
-		vRef1Sum += (long)localCurrent1;
-		vRef2Sum += (long)localCurrent2;
-	}
-	vRef1 = (vRef1Sum >> 8);
-	vRef2 = (vRef2Sum >> 8);
-	if (vRef1 > 512 + 50 || vRef1 < 512 - 50 || vRef2 > 512 + 50 || vRef2 < 512 - 50) {
- 		faultBits |= VREF_FAULT;
-	}
-	DelayTenthsSecond(savedValues.prechargeTime + 1);  // Make sure at least 5 time constants for precharge time!!
-	O_LAT_CONTACTOR = 1;  // close main contactor.
-	DelayTenthsSecond(2);
-#ifndef OREGON_MOTOR_CONTROLLER
-	O_LAT_PRECHARGE_RELAY = 0;  // open precharge relay once main contactor is closed.
-#endif
+	ComputeZeroCurrentOffsets();  // The current sensors have an offset of around 2.5v at zero amps.  So, what you do is, measure the A/D of the 2 phase currents like 256 times, and average it.  Then, use those 2 offsets for the rest of the time the controller is on.
+	ChargeUpCapacitorBank();
 	ClearAllFaults();	// The flip flop and desaturation detection faults start up in an unknown state. clear them.
-	U2STAbits.OERR = 0; // ClearReceiveBuffer();
 	ShowMenu(); 	// serial show menu.
 	while(1) {
 		ProcessCommand();  // If there's a command to be processed, this does it.  haha.
-		// if myDataStream.period not zero display data stream at specified interval
-		if (TMR1 > 115) {
-			counter1k++;
-			TMR1 = 0;
-		}
-		if (myDataStream.period) {
-			if ((counter1k - myDataStream.timeOfLastTransmission) >= myDataStream.period) {
-				GrabDataSnapshot();
-				if (myDataStream.showStreamOnce) {
-					myDataStream.period = 0;  // Show it once and then stop the stream.
-				}
-				// myDataStream.period mS passed since last time, adjust myDataStream.timeOfLastTransmission to trigger again
-				myDataStream.timeOfLastTransmission = counter1k;
-				StreamData(); // 
-			}
-		}
-		if (myPI.testFinished) {
-			myPI.testFinished = 0;
-			if (myPI.testFailed) {
-				TransmitString("No values passed the test.\r\n");
-				TransmitString("Try the following:\r\n");
-				TransmitString("pi-ratio 63\r\n");
-				TransmitString("run-pi-test\r\n");
-				TransmitString("pi-ratio 64\r\n");
-				TransmitString("run-pi-test\r\n");
-				TransmitString("pi-ratio 65\r\n");
-				TransmitString("run-pi-test\r\n");
-				TransmitString("Just keep going.  If nothing passes the test after you have tried pi-ratio all the way to, say, 200,\r\n");
-				TransmitString("it may be that the PI test is too stringent for your motor.  Email me at paulandsabrinasevstuff@gmail.com.\r\n");
-			}
-			else {
-				TransmitString("The test was a success.  If you are staying with this bus voltage, type 'save':\r\n");				
-				TransmitString("If you change your bus voltage, you should rerun the command 'run-pi-test'.\r\n");
-			}
-		}
-		else if (myRotorTest.testFinished) {
-			myRotorTest.testFinished = 0;
-			if (myRotorTest.maxTestSpeed < 32) { // it should be WAY  faster than this.
-				TransmitString("Your rotor test failed.\r\n");				
-			}
-			else {
-				TransmitString("Your rotor test was a success!  Type 'config' to see the new rotor time constant.\r\n");
-				TransmitString("To save the newly found rotor time constant, type 'save'.\r\n");
-			}
-		}
-		else if (myAngleOffsetTest.testFinished)  {
-			myAngleOffsetTest.testFinished = 0;
-			if (myAngleOffsetTest.testFailed == 1) {
-				TransmitString("Your angle offset test failed.\r\n");				
-			}
-			else {
-				TransmitString("Your angle offset test was a success!  Type 'config' to see the new angle offset.\r\n");
-				TransmitString("To save the newly found angle offset, type 'save'.\r\n");
-			}
-		}
-		else if (myMotorSaliencyTest.testFinished) {
-			myMotorSaliencyTest.testFinished = 0;
-			TransmitString("Motor Saliency Test Time (lower is better): ");
-			// 0         1         2         3         4         5
-			// 012345678901234567890123456789012345678901234567890123456789
-			// xxxxx\r\n
-			strcpy(intString,"xxxxx\r\n");
-			u16_to_str(&intString[0], myMotorSaliencyTest.elapsedTime, 5);	
-			TransmitString(intString);
-		}
-
-		if (I_PORT_GLOBAL_FAULT == 0) {
-			if (I_PORT_UNDERVOLTAGE_FAULT == 0) {
-				faultBits |= UNDERVOLTAGE_FAULT;
-			}
-//			for (i = 0; i < 10000; i++) {
-//				Delay1uS();
-//			}
-//			faultBits &= ~OVERCURRENT_FAULT;			
-//			if (((faultBits & UNDERVOLTAGE_FAULT) == 0) && ((faultBits & DESAT_FAULT) == 0))
-//				ClearFlipFlop();
-		}
-		if (faultBits & STARTUP_FAULT) {
-			if (throttle == 0) { // Make sure throttle is zero before allowing things to start.
-				faultBits &= ~STARTUP_FAULT;
-			}
-		}
-		if (faultBits != 0) {
-			if ((faultBits & 1) && (notShownFaultYet & 1)) {
-				TransmitString("Throttle out of range! Is it unplugged?\r\n");
-				notShownFaultYet &= ~1;
-			}
-			if ((faultBits & 2) && (notShownFaultYet & 2)) {
-				TransmitString("Desaturation Detection Fault!  That's actually pretty bad.\r\n");
-				notShownFaultYet &= ~2;
-			}
-			if ((faultBits & 4) && (notShownFaultYet & 4)) {
-				TransmitString("UART fault.  Is the serial cable unplugged?\r\n");
-				notShownFaultYet &= ~4;
-			}
-			if ((faultBits & 8) && (notShownFaultYet & 8)) {
-				TransmitString("Undervoltage Fault.  Either your 5v or 24v supply dropped too low.\r\n");
-				notShownFaultYet &= ~8;
-			}
-			if ((faultBits & 16) && (notShownFaultYet & 16)) {
-				TransmitString("Overcurrent fault.  The hardware overcurrent protection just came on and saved the day.\r\n");
-				notShownFaultYet &= ~16;
-			}
-			if ((faultBits & 32) && (notShownFaultYet & 32)) {
-				TransmitString("Current sensor fault.  Is a current sensor unplugged?\r\n");
-				notShownFaultYet &= ~32;
-			}
-			if ((faultBits & 64) && (notShownFaultYet & 64)) {
-				TransmitString("High pedal lockout fault.  Ignore this for now.  It's not really a fault.  haha.\r\n");
-				notShownFaultYet &= ~64;
-			}
-			if ((faultBits & 128) && (notShownFaultYet & 128)) {
-				TransmitString("Rotor flux angle fault.  something weird happened with the rotor flux angle.\r\n");
-				notShownFaultYet &= ~128;
-			}
-			if ((faultBits & 256) && (notShownFaultYet & 256)) {
-				TransmitString("There was some hardware caused fault, not originating on the microcontroller (not set by me!\r\n");
-				notShownFaultYet &= ~256;
-			}
-			if ((faultBits & 512) && (notShownFaultYet & 512)) {
-				TransmitString("P I Overflow fault.  It's really not tracking IdRef and IqRef well at all.\r\n");
-				notShownFaultYet &= ~512;
-			}
-			if ((faultBits & 1024) && (notShownFaultYet & 1024)) {
-				TransmitString("PDC Fault.  I think I got rid of this one.\r\n");
-				notShownFaultYet &= ~1024;
-			}
-			if ((faultBits & 2048) && (notShownFaultYet & 2048)) {
-				TransmitString("Motor Overspeed Fault.  The motor RPM got too high!\r\n");
-				notShownFaultYet &= ~2048;
-			}
-			if ((faultBits & 4096) && (notShownFaultYet & 4096)) {
-				TransmitString("Magnetizing Current fault.  It got crazy high for some reason.\r\n");
-				notShownFaultYet &= ~4096;
-			}
-			if ((faultBits & 8192) && (notShownFaultYet & 8192)) {
-				TransmitString("Encoder cable unplugged.  I'm not using this one at the moment.\r\n");
-				notShownFaultYet &= ~8192;
-			}
-			if ((faultBits & 16384) && (notShownFaultYet & 16384)) {
-				TransmitString("\r\nI bet you just typed 'off'  haha..\r\n");
-				notShownFaultYet &= ~16384;
-			}
-		}
+		UpdateCounter1k();
+		GetCurrentRadiusRefRef();
+		UpdateDataStream();
+		DisplayTestResults();
+		CheckForFaults();
+		DisplayFaultMessages();
 		// let the interrupts take care of the rest...
 		ClrWdt();  // kick the watchdog.  haha.  That's a Fran original.
  	}
@@ -494,27 +341,18 @@ int main() {
 // This runs at 9.997kHz.
 void __attribute__ ((__interrupt__,auto_psv)) _ADCInterrupt(void) {
 	static volatile unsigned int rotorFluxAnglePlus90 = 0;
-	static volatile long temperatureSum = 0;
 	static volatile unsigned int elapsedTimeInterrupt = 0;
-	static volatile int throttleCounter = 0;
 	static volatile int cos_theta_times32768 = 0;
 	static volatile int sin_theta_times32768 = 0;
 	static volatile int tempVd = 0;
 	static volatile int tempVq = 0;
-	static volatile int temp = 0;
 	static volatile int rampRate = 1;
 	static volatile unsigned int startTimeInterrupt = 0;
-	static volatile long batteryCurrentLong = 0;
 	static volatile long vBetaSqrt3_times32768 = 0;
 	static volatile long v_alpha_times32768 = 0;
-	static volatile int revCounter = 0;	// revCounter increments at 10kHz.  When it gets to 78, the number of ticks in POSCNT is extremely close to the revolutions per seoond * 16.
-								// So, the motor mechanical speed will be computed every 1/128 seconds, and will have a range of [0, 3200], where 3200 corresponds to 12000rpm.	
-	static volatile long int ticksPerSecInstantaneous = 0;
-	static volatile long int ticksPerSecAverage_times256 = 0;
-	static volatile long int ticksPerSecAverage = 0;
-	static volatile int diffPos = 0;
-	static volatile int sign = 1;
 	static volatile int bigArrayCounter = 0;
+//	static volatile int zeroThrottle = 0;
+//	static volatile unsigned int zeroThrottleTimer = 0;
 
 	startTimeInterrupt = TMR4;
 
@@ -523,104 +361,8 @@ void __attribute__ ((__interrupt__,auto_psv)) _ADCInterrupt(void) {
 	// ADIF = 0 means we are resetting it so that an interrupt request has not occurred.
 
 	counter10k++;	
+	ComputePositionAndSpeed();
 
-	switch(savedValues.motorType) {
-		case AC_INDUCTION_MOTOR:	// use these on induction motors.
-			// so dense... so glorious.  Covers positive and negative RPM for ACIM only.
-			// 
-			revCounter++;
-			if (revCounter >= revCounterMax) { // 512 ticks per revolution for encoder.
-				RPS_times16 = POSCNT;	// if POSCNT is 0x0FFFF due to THE MOTOR GOING BACKWARDS, RPS_times16 would be -1, since it's of type signed short.  So, it's all good.  Negative RPM is covered.
-				POSCNT = 0;
-				revCounter = 0;
-				if (RPS_times16 > maxRPS_times16) {  //
-					faultBits |= OVERSPEED_FAULT;
-				}
-				else if (RPS_times16 < -maxRPS_times16) {
-					faultBits |= OVERSPEED_FAULT;
-				}
-				else {
-					faultBits &= ~OVERSPEED_FAULT;
-				}
-			}
-			ComputeRotorFluxAngle();
-		break;
-		case TOYOTA_MGR_MOTOR:	// Toyota MGR hybrid motor does 2 electrical revolutions per 1 resolver revolution.
-			temp = POSCNT;			// it will be in [0,1023).  4 times the 256 ticks coming from the resolver to encoder board.  Two electrical revolutions per index pulse.  It's my resolver to encoder board, so I ought to know!!!  haha.
-			if (temp < 10000) { // I initialize POSCNT to an absurdly big value (15000).  It won't be in that range for long though.  But during this time, it could vary from around 14500 up to 15500.  As soon as an index pulse comes along, it will forever be trapped in [0, 511].
-				myFirstEncoderIndexPulseTest.testRunning = 0; // poscnt is in [0,1023].  But the actual electrical angle is in [0,511]
-				temp += myAngleOffsetTest.currentAngleOffset; 	// currentAngleOffset was found back when the motor had to be configured.  It is normalized to units of [0,511] electrical "degrees". 
-			}
-			else {  // there hasn't been an index pulse yet.  
-				temp += myFirstEncoderIndexPulseTest.currentAngleOffset; 	// currentAngleOffset was found back when the motor had to be configured.  It is in units of [0,511] electrical "degrees". 
-			}
-			temp &= 511;		// Now, rotorFluxAngle is once again inside [0,511].
-			rotorFluxAngle = temp;  // rotorFluxAngle can't be negative.
-				// There are NUM_POLE_PAIRS index pulses per mechanical revolution when using the resolver to encoder board ONLY FOR THE LEAF MOTOR!!!!  For the toyota motor, there are 2
-
-			// permanent magnet AC motor mechanical speed computation.
-			// do this later.
-			poscnt = POSCNT;
-			diffPos = poscnt - poscntOld; // if this is > 512, make it diffPos - 1024. That way, let's say poscnt just went from 0 to 1023 (negative rotation).  We can call that diffPos = -1.
-			poscntOld = poscnt;
-			if (diffPos > 512) { // assume negative rotation.  
-				diffPos = diffPos - 1024;
-			}
-			else if (diffPos < -512) { // For example, let's say poscntOld was 511, and now poscnt is 0 (positive rotation).  We want diffPos to be 1.  So, we do diffPos + 512.
-				diffPos = diffPos + 1024; // 
-			}
-			ticksPerSecInstantaneous = __builtin_mulss(10000,(int)diffPos);  // This will be very erratic.  Wild swings, so smooth it out below with a filter that takes almost 1/50sec to converge to within 99.9%.
-			ticksPerSecAverage_times256   	//= (63*ticksPerSecAverage_times64)/64 + 1*ticksPerSecInstantaneous) / 64 * 64;
-									 		//= (64*(ticksPerSecAverage_times64/64) - 1*ticksPerSecAverage + 1*ticksPerSecInstantaneous) / 64 * 64
-									= ticksPerSecAverage_times256 - ticksPerSecAverage + (long)ticksPerSecInstantaneous;
-			ticksPerSecAverage = ticksPerSecAverage_times256 >> 8;
-			// Below line assumes 512 ticks per electrical revolution.  The resolver to encoder has 256 ticks, and then I do 4 times the resolution.  But then the stupid toyota MGR does 2 electrical revolutions per index pulse!!  So, 1024 ticks per 2 electrical revolutions.  So, 512 ticks per electrical revolution.
-			RPS_times16 = __builtin_divsd((long)ticksPerSecAverage, (int)(savedValues2.numberOfPolePairs << 5));	//  x ticks/sec * mechanicalRevolutions/(polePairs * 512 ticks) = mechanicalRevolutions/sec.  16mechanicalRev/(16sec) = RPS_times16.  There are 512 ticks per electrical revolution with my resolver to encoder after the resolution quadrupling that happens when I intiialize the quadrature encoder interface.
-		break;
-		case NISSAN_LEAF_MOTOR:
-			temp = POSCNT;		// it will be in [0,512).  It's my resolver to encoder board, so I ought to know!!!  haha.
-		
-			if (temp < 10000) { // I initialize POSCNT to an absurdly big value (15000).  It won't be in that range for long though.  But during this time, it could vary from around 14500 up to 15500.  As soon as an index pulse comes along, it will forever be trapped in [0, 511].
-				myFirstEncoderIndexPulseTest.testRunning = 0;
-				poscnt += myAngleOffsetTest.currentAngleOffset; 	// currentAngleOffset was found back when the motor had to be configured.  It is in units of [0,511] electrical "degrees". 
-				temp &= 511;		// Now, rotorFluxAngle is once again inside [0,511].
-				rotorFluxAngle = temp;  // rotorFluxAngle can't be negative.
-				// There are NUM_POLE_PAIRS index pulses per mechanical revolution when using the resolver to encoder board WITH THE LEAF MOTOR!!  The friggen toyota MGR has 2 index pulses in 4 electrical revolutions, and in 1 mechanical revolution.
-			}
-			else {  // there hasn't been an index pulse yet.  
-				temp += myFirstEncoderIndexPulseTest.currentAngleOffset; 	// currentAngleOffset was found back when the motor had to be configured.  It is in units of [0,511] electrical "degrees". 
-				temp &= 511;		// Now, rotorFluxAngle is once again inside [0,511].
-				rotorFluxAngle = temp;  // rotorFluxAngle can't be negative.
-			}
-			poscnt = POSCNT;		// poscnt is used elsewhere in the program.  Don't modify it like you did with 'temp'.
-			diffPos = poscnt - poscntOld; // if this is > 256, make it diffPos - 512. That way, let's say poscnt just went from 0 to 511 (negative rotation)
-			poscntOld = poscnt;
-			if (diffPos > 256) { // assume negative rotation.  For example, maybe poscntOld was 0 and now poscnt is 511.  diffPos would be 511.
-				diffPos = diffPos - 512;
-			}
-			else if (diffPos < -256) { // For example, let's say poscntOld was 511, and now poscnt is 0 (positive rotation).  We want diffPos to be 1.  So, we do diffPos + 512.
-				diffPos = diffPos + 512;
-			}
-			ticksPerSecInstantaneous = __builtin_mulss(10000,(int)diffPos);  // This will be very erratic.  Wild swings, so smooth it out below with a filter that takes almost 1/50sec to converge to within 99.9%.
-			ticksPerSecAverage_times256   	//= (63*ticksPerSecAverage_times64)/64 + 1*ticksPerSecInstantaneous) / 64 * 64;
-									 		//= (64*(ticksPerSecAverage_times64/64) - 1*ticksPerSecAverage + 1*ticksPerSecInstantaneous) / 64 * 64
-									= ticksPerSecAverage_times256 - ticksPerSecAverage + (long)ticksPerSecInstantaneous;
-			ticksPerSecAverage = ticksPerSecAverage_times256 >> 8;
-			// Below line assumes 512 ticks per electrical revolution.  The resolver to encoder has 256 ticks from that board I made, and then I double the resolution when it initizlizes the Quadrature Encoder Interface.
-			RPS_times16 = __builtin_divsd((long)ticksPerSecAverage, (int)(savedValues2.numberOfPolePairs << 5));	//  x ticks/sec * mechanicalRevolutions/(polePairs * 512 ticks) = mechanicalRevolutions/sec.  16mechanicalRev/(16sec) = RPS_times16.  There are 512 ticks per electrical revolution with my resolver to encoder after the resolution doubling that happens when I intiialize the quadrature encoder interface.
-		break;
-		case PERMANENT_MAGNET_MOTOR_WITH_ENCODER:
-			// There are 'n' POSCNT values that would work in [0, NUM_ENCODER_TICKS*4], where 'n' is the number of pole pairs.
-			// POSCNT is in [0, NUM_ENCODER_TICKS*4].  An index pulse resets POSCNT back to zero, or to MAX_POSCNT if counting down.
-			// 
-			//			temp = POSCNT;
-			//			tempLong = __builtin_muluu((unsigned int)temp,(unsigned int)savedValues2.numberOfPolePairs) << 7; // max encoder ticks is 4096, max pole pairs is 128.  Well, the product of max encoder ticks and number of pole pairs must be <= 4096*128, since (4096*4)*128*512 = 2^32.  
-			//			temp = __builtin_divud((unsigned long)tempLong, (unsigned int)savedValues2.encoderTicks);
-			//			temp += myAngleOffsetTest.currentAngleOffset;
-			//			rotorFluxAngle = temp & 511;
-			// Now find RPS_times16.
-		break;
-	}
 	// CH0 corresponds to ADCBUF0. etc...
 	// CH0=AN7, CH1=AN0, CH2=AN1, CH3=AN2. 
 	// AN0 = CH1 = ADThrottle
@@ -642,241 +384,14 @@ void __attribute__ ((__interrupt__,auto_psv)) _ADCInterrupt(void) {
 	Ic = -Ia - Ib;
 	Ib_times2 = (Ib << 1);
 
-	rawThrottle = ADCBUF1;
-	throttleSum += rawThrottle;
-	temperatureSum += ADCBUF0;
-	batteryCurrentLong = __builtin_mulss(Ia,pdc1) + __builtin_mulss(Ib,pdc2) + __builtin_mulss(Ic,pdc3);  // batteryCurrent is in [-4096*sqrt(3)/2, 4096*sqrt(3)/2] = [-3547, 3547].
-	batteryCurrentSum += batteryCurrentLong;
-	throttleCounter++;
-	if (throttleCounter >= 128) {
-		throttleCounter = 0;
-		throttle = (throttleSum >> 7);  // in [0, 1023].
-		temperatureBasePlate = (temperatureSum >> 7); // in [0,1023]
-		if (temperatureBasePlate < 147) temperatureBasePlate = 147; // clamp it so you get an integer when converting to the variable resistance.  This assumes +5v -- 1k -- 10k thermistor --- 4.7k --- ground.  P/N: NTCALUG03A103G
-		batteryCurrentNormalized = __builtin_divsd(batteryCurrentSum >> 7,MAX_DUTY);  // 
-		throttleSum = 0;
-		temperatureSum = 0;
-		batteryCurrentSum = 0;
-	
-		// Is there a throttle fault?
-		if (throttle <= savedValues.throttleFaultPosition) {
-			faultBits |= THROTTLE_FAULT;
-		}
-		if (savedValues2.throttleType == 1) {
-			throttle = 1023 - throttle;  // invert it.
-		}
-		// I think I'll work my way left to right.  ThrottleFaultVoltage < ThrottleMaxRegen < ThrottleMinRegen < ThrottleMin < ThrottleMax 
-		if (throttle < savedValues.maxRegenPosition) {  //First clamp it below.
-			throttle = savedValues.maxRegenPosition;	
-		}
-		else if (throttle > savedValues.maxThrottlePosition) {	// And clamp it above!  
-			throttle = savedValues.maxThrottlePosition;
-		}
-		if (throttle < savedValues.minRegenPosition) {  // It's in regen territory.  Map it from [savedValues.maxThrottleRegen, savedValues.minThrottleRegen) to [-maxMotorCurrentNormalizedRegen, 0)
-			throttle -= savedValues.minRegenPosition;  // now it's in the range [maxThrottleRegen - minThrottleRegen, 0)
-			throttle =	-__builtin_divsd(((long)throttle) * maxMotorCurrentNormalizedRegen, savedValues.maxRegenPosition - savedValues.minRegenPosition);
-		}
-		else if (throttle <= savedValues.minThrottlePosition) { // in the dead zone!
-			throttle = 0;
-		}
-		else { // <= throttle max is the only other option!  Map the throttle from (savedValues.minThrottlePosition, savedValues.maxThrottlePosition] to (0,maxMotorCurrentNormalized]
-			throttle -= savedValues.minThrottlePosition;
-			throttle = __builtin_divsd(__builtin_mulss(throttle, maxMotorCurrentNormalized), savedValues.maxThrottlePosition - savedValues.minThrottlePosition);
-		}
-		if (temperatureBasePlate > THERMAL_CUTBACK_START) {  // Force the throttle to cut back.
-			temperatureMultiplier = (temperatureBasePlate - THERMAL_CUTBACK_START) >> 3;  // 0 THROUGH 7.
-			if (temperatureMultiplier >= 7)
-				temperatureMultiplier = 0;
-			else {
-				// temperatureMultiplier is now 6 to 0 (for 1/8 to 7/8 current)
-				temperatureMultiplier = 7 - temperatureMultiplier;
-				// temperatureMultiplier is now 1 for 1/8, 2 for 2/8, ..., 7 for 7/8, etc.
-			}
-		}
-		else {
-			temperatureMultiplier = 8;	// Allow full throttle.
-		}
-		currentRadiusRefRef = __builtin_mulss(throttle,temperatureMultiplier) >> 3;  // scale back the current command based on temperature.
-		if (RPS_times16 < 8) {  // if less than 0.5 rev per second, make sure there's no regen.
-			if (currentRadiusRefRef < 0) currentRadiusRefRef = 0;
-		}
-		if (currentRadiusRefRef < 0) {
-			currentRadiusRefRef = -currentRadiusRefRef;
-			sign = -1;
-		}
-		else {
-			sign = 1;
-		}
-		/////////////////////////////////////////////////////////////////////////////////////////////////
-		// Keep battery amps in [-savedValues.maxBatteryAmpsRegen, savedValues.maxBatteryAmps] //////////	
-		if (batteryCurrentNormalized > maxBatteryCurrentNormalized) { // maxBatteryCurrentNormalized is positive.  Computed in "ProcessCommand", each time a new savedValues.maxBatteryAmps is found.
-			// averageDuty = (pdc1+pdc2+pdc3)/3.  But division is slow.  So, do this instead:
-			// averageDuty = 65536 * ((pdc1+pdc2+pdc3)/3) / 65536
-			// averageDuty = 21845 * (pdc1+pdc2+pdc3) / 65536
-			// averageDuty = (21845 * (pdc1+pdc2+pdc3)) >> 16
-			averageDuty = __builtin_mulss(21845, pdc1+pdc2+pdc3) >> 16;	// avoiding divide by 3.  HAHA.  
-			if (averageDuty > 0) {
-				temp = __builtin_divsd(maxBatteryCurrentNormalized,averageDuty); // 
-				if (currentRadiusRefRef > temp) {
-					currentRadiusRefRef = temp;
-				}
-			}
-		}
-		else if (batteryCurrentNormalized < -maxBatteryCurrentNormalizedRegen) { // maxRegenCurrent is negative.  Computed in "InitializeThrottleAndCurrentVariables()".
-			// averageDuty = (pdc1+pdc2+pdc3)/3.  But division is slow.  So, do this instead:
-			// averageDuty = 65536 * ((pdc1+pdc2+pdc3)/3) / 65536
-			// averageDuty = 21845 * (pdc1+pdc2+pdc3) / 65536
-			// averageDuty = (21845 * (pdc1+pdc2+pdc3)) >> 16
-			averageDuty = __builtin_mulss(21845, pdc1+pdc2+pdc3) >> 16;	// avoiding divide by 3.  HAHA.  
-			if (averageDuty > 0) {
-				temp = -__builtin_divsd(maxBatteryCurrentNormalizedRegen,averageDuty); // This is the first try at IqRefRef.  Later, other values will be calculated based on throttle.  Keep the one closest to zero.
-				if (currentRadiusRefRef < temp) {
-					currentRadiusRefRef = temp;  // if it was more negative, then make it smaller in magnitude, 'cuz there's too much friggen current going into the batteries!!!
-				}
-			}
-		}
-
-		if (myRotorTest.testRunning) {  // I need this to run for say, 2 seconds, and then record the RPM.
-			currentRadiusRefRef = 300;
-			if (counter10k - myRotorTest.startTime > 20000) {  // 2 seconds.
-				myRotorTest.startTime = counter10k;
-				if (RPS_times16 > myRotorTest.maxTestSpeed) {
-					myRotorTest.maxTestSpeed = RPS_times16; // save the best speed so far.
-					myRotorTest.bestTimeConstantIndex = myRotorTest.timeConstantIndex;
-				}
-				myRotorTest.timeConstantIndex++;
-				if (myRotorTest.timeConstantIndex >= MAX_ROTOR_TIME_CONSTANT_INDEX) {
-					savedValues2.rotorTimeConstantIndex = myRotorTest.bestTimeConstantIndex;
-					myRotorTest.testRunning = 0;
-					myRotorTest.testFinished = 1;
-					currentRadiusRefRef = 0;
-				}
-			}
-		}
-		else if (myFirstEncoderIndexPulseTest.testRunning) {
-			// IqRefRef & IdRefRef are already found from measuring throttle.
-			if (counter10k - myFirstEncoderIndexPulseTest.startTime > 2500) {  // 0.25 seconds per attempt.  2 seconds to try all the way around the circle if it's broken into 8 pieces.  Do you only have to go half way around?
-				myFirstEncoderIndexPulseTest.startTime = counter10k;
-				if (RPS_times16 == 0) { // move to the next angle offset. This one isn't producing movement with the motor.
-					myFirstEncoderIndexPulseTest.currentAngleOffset += 64;  // move 1/8 of a revolution, to see if you can find a better guess at the rotor flux angle.  It starts in a unknown state.
-					myFirstEncoderIndexPulseTest.currentAngleOffset &= 511;
-				}
-			}
-		}
-
-		// Now that currentRadiusRefRef has been established based on throttle position, temperature, etc. we need to decide how to break it down into IdRefRef and IqRefRef.  That will depend on the type of motor we are using.
-		if (savedValues.motorType != AC_INDUCTION_MOTOR) { // 2 & 3 are permanent magnet types.  1 is induction..
-//			K = saliencyConstant[myMotorSaliencyTest.KArrayIndex]; 
-//			currentRadiusRefRefOverSqrt2 = __builtin_mulus(46341u,currentRadiusRefRef) >> 16;
-//			IdRefRef = -K + unknownTriangleLeg(K, currentRadiusRefRefOverSqrt2);
-			if (myAngleOffsetTest.testRunning) {
-				IdRefRef = 300;
-				IqRefRef = 0;
-				if (counter10k - myAngleOffsetTest.startTime > 5000) {  // 0.5 seconds. 
-					myAngleOffsetTest.startTime = counter10k;
-					if (RPS_times16 == 0) {
-						myAngleOffsetTest.testRunning = 0;
-						myAngleOffsetTest.testFinished = 1;
-						myAngleOffsetTest.testFailed = 0;
-						IdRefRef = 0;
-						IqRefRef = 0;
-					}
-					else {
-						if (myAngleOffsetTest.currentAngleOffset < 511) {
-							myAngleOffsetTest.currentAngleOffset++;
-						}
-						else {
-							myAngleOffsetTest.testRunning = 0;
-							myAngleOffsetTest.testFinished = 1;
-							currentRadiusRefRef = 0;
-						}
-					}
-					savedValues2.angleOffset = myAngleOffsetTest.currentAngleOffset;
-				}
-			}
-			else {
-				#ifdef OREGON_MOTOR_CONTROLLER
-					IdRefRef = 0; // Let Id be this percent of the radius.  So, that looks like radius * that / 1024.
-					IqRefRef = currentRadiusRefRef;
-					IqRefRef *= sign;
-				#else
-					IdRefRef = __builtin_mulss(-myMotorSaliencyTest.KArrayIndex,currentRadiusRefRef) >> 10; // Let Id be this percent of the radius.  So, that looks like radius * that / 1024.
-					IqRefRef = unknownTriangleLeg(currentRadiusRefRef, IdRefRef);
-					IqRefRef *= sign;
-				#endif
-			}
-		}
-		else {
-			IdRefRef = currentRadiusRefRef;				// change this later so that IdRefRef^2 + IqRefRef^2 = currentRadiusRefRef^2.
-			IqRefRef = sign*currentRadiusRefRef;
-		}
-	}
-
+	newADValuesAvailable = 1;
+	// limit current radius reference outisde this loop.
 	if (myPI.testRunning) {
-		rotorFluxAngle = 0;
-		if ((counter10k - myPI.previousTestCompletionTime) < 1000) {  // wait 0.1 seconds between tests.  That gives Id and Iq a chance to go back to zero.
-			IdRef = 0;
-			IqRef = 0;
-		}
-		else {  // I'm running the PI loop test on a particular Kp and Ki to see if it passes the convergence test below.
-			IdRef = 0;  // 512 on a scale of 0 to 4096 corresponds to 75 amps for a LEM Hass 300-s.  Because 4096 means 600amps.
-			IqRef = 511;
-	
-			if (myPI.iteration == 0) {
-				myPI.iteration++;
-			}
-			else {
-				if (myPI.error_q < -120/*-80*/) {  // if it overshot the target by 80, move on to the next one.  We don't want overshoot.
-					MoveToNextPIValues();
-				}
-				else if (myPI.error_q > IqRef + 200) {  //  IqRef is a constant 511.  If Iq swung to -200, that's bad.  Move on.  Iq shouldn't go below zero much.
-					MoveToNextPIValues();
-				}
-				else if (myPI.zeroCrossingIndex == -1 && myPI.iteration > myPI.maxIterationsBeforeZeroCrossing) {  // myPI.zeroCrossingIndex == -1 means it hasn't crossed zero yet.
-					MoveToNextPIValues();  // CONVERGENCE TOO SLOW!!!  Move on!
-				}
-				else if (myPI.error_q > 120/*80*/ && myPI.zeroCrossingIndex >= 0) {  // it already crossed zero, but now is way back up again.  This is oscillation.  move on!
-					MoveToNextPIValues();
-				}
-				else {
-					if (myPI.error_q <= 0 && myPI.zeroCrossingIndex == -1) {  // if it's crossing zero for the first time, record the location.
-						myPI.zeroCrossingIndex = myPI.iteration;
-					}
-					myPI.iteration++;
-					if (myPI.iteration >= 400) {  // 400 iterations of the PI loop happened, and it passed all the rigorous requirements.  Save Kp & Kq constants.  They are keepers!
-						savedValues.Kp = myPI.Kp;
-						savedValues.Ki = myPI.Ki;
-						myPI.testRunning = 0;  // You found a good PI value, so quit hunting!
-						myPI.testFailed = 0;
-						myPI.testFinished = 1;
-					}
-				}
-				if (myPI.Kp > 20000) {  // 
-					myPI.testRunning = 0;
-					myPI.testFailed = 1;
-					myPI.testFinished = 1;
-				}
-			}
-		}
+		RunPITest();
 	}
 	else if (myMotorSaliencyTest.testRunning) {
-		currentRadiusRefRef = 200;
-//		K = saliencyConstant[myMotorSaliencyTest.KArrayIndex]; 
-//		currentRadiusRefRefOverSqrt2 = __builtin_mulus(46341u,currentRadiusRefRef) >> 16;
-		IdRefRef = __builtin_mulss(-myMotorSaliencyTest.KArrayIndex,currentRadiusRefRef) >> 10; // try various negative values...  from 0 down to whatever the crap you want.
-		
-//		IdRefRef = -K + unknownTriangleLeg(K, currentRadiusRefRefOverSqrt2);
-		IqRefRef = unknownTriangleLeg(currentRadiusRefRef, IdRefRef);
-
-		if (voltageDiskExceeded) {
-			myMotorSaliencyTest.elapsedTime = counter10k - myMotorSaliencyTest.startTime;
-			currentRadiusRefRef = 0;
-			myMotorSaliencyTest.testRunning = 0;
-			myMotorSaliencyTest.testFinished = 1;
-			currentRadiusRefRef = 0;
-		}
+		RunMotorSaliencyTest();
 	}
-
 	///////////////////////////////////////////////////////////////////////////////////////////////
 	// Clarke transform:
 	//  	First, take the 3 vectors, 120 degrees apart, and add them to
@@ -906,7 +421,6 @@ void __attribute__ ((__interrupt__,auto_psv)) _ADCInterrupt(void) {
 	Id = (__builtin_mulss((int)i_alpha, (int)cos_theta_times32768) + __builtin_mulss((int)i_beta, (int)sin_theta_times32768)) >> 15; 	
 	Iq = (__builtin_mulss((int)(-i_alpha), (int)sin_theta_times32768) + __builtin_mulss((int)i_beta,(int)cos_theta_times32768)) >> 15; 
 
-
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	// PI Loop:
 	myPI.error_q = IqRef - Iq;
@@ -914,8 +428,29 @@ void __attribute__ ((__interrupt__,auto_psv)) _ADCInterrupt(void) {
 	
 	myPI.errorSum_q += myPI.error_q - myPI.clampErrorVq;
 	myPI.errorSum_d += myPI.error_d - myPI.clampErrorVd;
+
+//	if (captureData == 1) {
+//		bigArray1[dataCaptureIndex] = ;
+//		bigArray2[dataCaptureIndex] = Vq;
+//		if (dataCaptureIndex < 253) {
+//			dataCaptureIndex++;
+//		}
+//		else {
+//			captureData = 0;
+//		}
+//	}
 	
-//	if (IdRef == 0 && IqRef == 0) {  // this causes overcurrent faults when going back to zero throttle from nonzero throttle with permanent magnet motors.  It works great in the case of an induction motor.  oh well.
+//	if (IdRef == 0 && IqRef == 0 && Vd < 30 && Vd > -30 && Vq < 30 && Vq > -30) {  // this causes overcurrent faults when going back to zero throttle from nonzero throttle.  It works great in the case of an induction motor.  oh well.
+//		zeroThrottleTimer++;
+//		if (zeroThrottleTimer > 50000) {
+//			zeroThrottle = 1;
+////		}
+//	}
+//	if (IdRef != 0 || IqRef != 0) {
+//		zeroThrottleTimer = 0;
+//		zeroThrottle = 0;
+//	}
+//	if (zeroThrottle) {
 //		myPI.pwm_d = 0;
 //		myPI.errorSum_d = 0;
 //		myPI.error_d = 0;
@@ -928,8 +463,7 @@ void __attribute__ ((__interrupt__,auto_psv)) _ADCInterrupt(void) {
 //	else {
 		myPI.pwm_d = (myPI.Kp * myPI.error_d) + (myPI.Ki*myPI.errorSum_d);
 		myPI.pwm_q = (myPI.Kp * myPI.error_q) + (myPI.Ki * myPI.errorSum_q);
-//	}
-
+//	} // 13 is what it was.
 	if (myPI.pwm_d > (MAX_VD_VQ << 13)) {
 		myPI.pwm_d = (MAX_VD_VQ << 13);
 		faultBits |= PI_OVERFLOW_FAULT;
@@ -1010,6 +544,11 @@ void __attribute__ ((__interrupt__,auto_psv)) _ADCInterrupt(void) {
 	// SpaceVectorModulation:
 	// You now turn Va, Vb, Vc into duties for PDC1, PDC2, PDC3.  
 
+#ifdef DEBUG_MODE
+	PDC1 = 1000;
+	PDC2 = 1000;
+	PDC3 = 1000;
+#else
 	if (faultBits == 0) {  // check again before poceeding, since there could have been a fault just above.
 		SpaceVectorModulation();
 	}
@@ -1024,6 +563,7 @@ void __attribute__ ((__interrupt__,auto_psv)) _ADCInterrupt(void) {
 		myPI.pwm_q = 0l;  
 		myPI.errorSum_q = 0l;		
 	}
+#endif
 	elapsedTimeInterrupt = TMR4 - startTimeInterrupt;
 }
 
@@ -1066,6 +606,8 @@ void MoveToNextPIValues() {
 }
 
 void InitPIStruct() {
+	IdRef = 0;
+	IqRef = 0;
 	myPI.Kp = (long)savedValues.Kp;
 	myPI.Ki = (long)savedValues.Ki;
 	myPI.error_d = 0l;
@@ -1082,11 +624,11 @@ void InitPIStruct() {
 	myPI.ratioKpKi = 62; //savedValues2.ratioKpKi;
 	myPI.zeroCrossingIndex = -1; // initialize to -1.
 	myPI.iteration = 0; // how many times have you run the PI loop with the same Kp and Ki?  This is used in the PI auto loop tuning.
-	myPI.maxIterationsBeforeZeroCrossing = 20; //20
+	myPI.maxIterationsBeforeZeroCrossing = currentMaxIterationsBeforeZeroCrossing; //20
 	myPI.previousTestCompletionTime = counter10k;
 }
 
-void ComputeRotorFluxAngle() {
+void ComputePositionAndSpeed() {
 	static volatile unsigned int rotorFluxAngle_times128 = 0;  // For fine control.
 	static volatile long magCurrChange = 0L;
 	static volatile long slipSpeedNumerator = 0L;
@@ -1095,126 +637,258 @@ void ComputeRotorFluxAngle() {
 	static volatile int magnetizingCurrent = 0;
 //	static volatile unsigned long tempLong = 0UL;
 	static volatile /*unsigned*/ int temp = 0;
+	static volatile int revCounter = 0;	// revCounter increments at 10kHz.  When it gets to 78, the number of ticks in POSCNT is extremely close to the revolutions per seoond * 16.
+								// So, the motor mechanical speed will be computed every 1/128 seconds, and will have a range of [0, 3200], where 3200 corresponds to 12000rpm.	
+	static int diffPos = 0;
+	static long ticksPerSecInstantaneous = 0;
+	
+	static long ticksPerSecAverage_times256 = 0;
+	static long ticksPerSecAverage = 0;
+	static long tempLong = 0;
 
-//;	 Physical form of equations:
-//;  Magnetizing current (amps):
-//;     Imag = Imag + (fLoopPeriod/fRotorTmConst)*(Id - Imag)
-//;
-//;  Slip speed in RPS:
-//;     VelSlipRPS = (1/fRotorTmConst) * (Iq/Imag) / (2*pi)
-//;
-//;  Rotor flux speed in RPS:
-//;     VelFluxRPS = iPoles * VelMechRPS + VelSlipRPS
-//;
-//;  Rotor flux angle (radians):
-//;     AngFlux = AngFlux + fLoopPeriod * 2 * pi * VelFluxRPS
-
-// ****For divide, use this:  	int quot =	 __builtin_divsd(long numerator, int denominator);****
-// ****For multiply, use this:  long prod =   __builtin_mulus(unsigned left,  int right);****  or muluu, or mulsu, or mulss.
-
-//; 1.  Magnetizing current (amps):
-//;     Imag = Imag + (fLoopPeriod/fRotorTmConst)*(Id - Imag)
-//      rotorTimeConstantArray[]'s entries have been scaled up by 2^18 to give more resolution for the rotor time constant.  I scaled by 18, because that allowed incrementing rotor time constant by 0.01 seconds.
-//	magnetizingCurrent += ((rotorTimeConstantArray1[myRotorTest.rotorTimeConstantIndex] * (Id - magnetizingCurrent))) >> 18;
-///////////////////////////////////////////////////////////////////////////
-
-	magCurrChange = __builtin_mulus((unsigned int)rotorTimeConstantArray1[myRotorTest.timeConstantIndex], (int)(Id - magnetizingCurrent));
-	if (magCurrChange > 0) {
-		if (magnetizingCurrentFine < MAX_LONG_INT - magCurrChange) {
-			magnetizingCurrentFine += magCurrChange;
-		}
-		else {
-			magnetizingCurrentFine = MAX_LONG_INT;
-			faultBits |= MC_OVERFLOW_FAULT;
-		}
+	if (myPI.testRunning) {
+		rotorFluxAngle = 0;
+		return;
 	}
-	else {
-		if (magnetizingCurrentFine > -MAX_LONG_INT - magCurrChange) {
-			magnetizingCurrentFine += magCurrChange;
-		}
-		else {
-			magnetizingCurrentFine = -MAX_LONG_INT;
-			faultBits |= MC_OVERFLOW_FAULT;
-		}
-	}
-	magnetizingCurrent = (int)(magnetizingCurrentFine >> 18);
-//	magnetizingCurrentAmps_times8 = __builtin_mulss((int)magnetizingCurrent, (int)currentSensorAmpsPerVoltTimes5) >> 11;  // 5/4*currentSensorAmpsPerVolt / 4096 * #ticks = amps.  So amps*8 cancels it down to >>11.
-
-////////////////////////////////////////////////////////////////////////////
-//; 2. To Compute Slip speed in RPS:
-//;    VelSlipRPS = (1/fRotorTmConst) * (Iq/Imag) / (2*pi)
-//     rotorTimeConstantArray2[] entries are 1/fRotorTmConst * 1/(2*pi) * 2^11.  I couldn't scale any higher than 2^11 so as to keep them integers. (this is not 100% true now.  haha.)
-//	   VelSlipRPS = (ARRAY[] * Iq) / Imag.
-//	   Let slipSpeedNumerator = (ARRAY[] * Iq).  Then, do the bit shift down first, and the divide by magnetizing current afterwards to prevent the loss of resolution.
-/////////////////////////////////////////////////////////////////////////////////////////////////////	
-	if (magnetizingCurrent == 0) {
-		return;  // there is no rotor flux angle, since there is no field.  So, keep the angle the same as it was before??
-	}
-	else if (Iq == 0) {
-		slipSpeedRPS_times16 = 0;  // If the numerator is 0, the whole thing is zero.
-	}
-	else {  // magnetizingCurrent != 0, slipSpeedNumerator != 0
-		slipSpeedNumerator = __builtin_mulus((unsigned int)rotorTimeConstantArray2[myRotorTest.timeConstantIndex], (int)Iq) >> 7; // Must scale down by 2^11 if you want units to be rev/sec.  But that's too grainy.  So, let's only scale down by 2^7 so you get slip speed in rev/sec * 16, rather than just rev/sec
-		if (magnetizingCurrent > 0) {
-			if (slipSpeedNumerator > 0L) {
-				if (slipSpeedNumerator > __builtin_mulss((int)magnetizingCurrent,(int)MAX_SLIP_SPEED_RPS_TIMES16)) {
-					slipSpeedRPS_times16 = MAX_SLIP_SPEED_RPS_TIMES16;  // must be positive slip speed
+	switch(savedValues.motorType) {
+		case AC_INDUCTION_MOTOR:	// use these on induction motors.
+			// so dense... so glorious.  Covers positive and negative RPM for ACIM only.
+			// 
+			revCounter++;
+			if (revCounter >= revCounterMax) { // 512 ticks per revolution for encoder.
+				RPS_times16 = POSCNT;	// if POSCNT is 0x0FFFF due to THE MOTOR GOING BACKWARDS, RPS_times16 would be -1, since it's of type signed short.  So, it's all good.  Negative RPM is covered.
+				POSCNT = 0;
+				revCounter = 0;
+				if (RPS_times16 > maxRPS_times16 || RPS_times16 < -maxRPS_times16) {  //
+					faultBits |= OVERSPEED_FAULT;
 				}
 				else {
-					slipSpeedRPS_times16 = __builtin_divsd((long)slipSpeedNumerator, (int)magnetizingCurrent);  // must be positive slip speed.
+					faultBits &= ~OVERSPEED_FAULT;
 				}
 			}
-			else { // if (slipSpeedNumerator < 0).  It can't be zero, since that case was already accounted for.
-				if (-slipSpeedNumerator > __builtin_mulss((int)magnetizingCurrent,(int)MAX_SLIP_SPEED_RPS_TIMES16)) {
-					slipSpeedRPS_times16 = -MAX_SLIP_SPEED_RPS_TIMES16;  // must end with negative slip speed.
+			//;	 Physical form of equations:
+			//;  Magnetizing current (amps):
+			//;     Imag = Imag + (fLoopPeriod/fRotorTmConst)*(Id - Imag)
+			//;
+			//;  Slip speed in RPS:
+			//;     VelSlipRPS = (1/fRotorTmConst) * (Iq/Imag) / (2*pi)
+			//;
+			//;  Rotor flux speed in RPS:
+			//;     VelFluxRPS = iPoles * VelMechRPS + VelSlipRPS
+			//;
+			//;  Rotor flux angle (radians):
+			//;     AngFlux = AngFlux + fLoopPeriod * 2 * pi * VelFluxRPS
+			
+			// ****For divide, use this:  	int quot =	 __builtin_divsd(long numerator, int denominator);****
+			// ****For multiply, use this:  long prod =   __builtin_mulus(unsigned left,  int right);****  or muluu, or mulsu, or mulss.
+			
+			//; 1.  Magnetizing current (amps):
+			//;     Imag = Imag + (fLoopPeriod/fRotorTmConst)*(Id - Imag)
+			//      rotorTimeConstantArray[]'s entries have been scaled up by 2^18 to give more resolution for the rotor time constant.  I scaled by 18, because that allowed incrementing rotor time constant by 0.01 seconds.
+			//	magnetizingCurrent += ((rotorTimeConstantArray1[myRotorTest.rotorTimeConstantIndex] * (Id - magnetizingCurrent))) >> 18;
+			///////////////////////////////////////////////////////////////////////////
+			
+			magCurrChange = __builtin_mulus((unsigned int)rotorTimeConstantArray1[myRotorTest.timeConstantIndex], (int)(Id - magnetizingCurrent));
+			if (magCurrChange > 0) {
+				if (magnetizingCurrentFine < MAX_LONG_INT - magCurrChange) {
+					magnetizingCurrentFine += magCurrChange;
 				}
 				else {
-					slipSpeedRPS_times16 = __builtin_divsd((long)slipSpeedNumerator, (int)magnetizingCurrent);  // this is negative result.
+					magnetizingCurrentFine = MAX_LONG_INT;
+					faultBits |= MC_OVERFLOW_FAULT;
 				}
 			}
-		}
-		else {  // magnetizingCurrent < 0
-			if (slipSpeedNumerator > 0) {  // POS / NEG = NEG.
-				if (slipSpeedNumerator > __builtin_mulss((int)(-magnetizingCurrent),(int)MAX_SLIP_SPEED_RPS_TIMES16)) {  //
-					slipSpeedRPS_times16 = -MAX_SLIP_SPEED_RPS_TIMES16;  // must be negative slip speed.  pos/neg = neg.
+			else {
+				if (magnetizingCurrentFine > -MAX_LONG_INT - magCurrChange) {
+					magnetizingCurrentFine += magCurrChange;
 				}
 				else {
-					slipSpeedRPS_times16 = __builtin_divsd((long)slipSpeedNumerator, (int)magnetizingCurrent);  // must be negative slip speed.
+					magnetizingCurrentFine = -MAX_LONG_INT;
+					faultBits |= MC_OVERFLOW_FAULT;
 				}
 			}
-			else {  // slipSpeedNumerator < 0, magnetizingCurrent < 0.  So, slipSpeed will be positive below.
-				if (slipSpeedNumerator < __builtin_mulss((int)magnetizingCurrent,(int)MAX_SLIP_SPEED_RPS_TIMES16)) {  // if it's more negative than the right hand side...
-					slipSpeedRPS_times16 = MAX_SLIP_SPEED_RPS_TIMES16;  // must end with positive slip speed.  neg / neg = pos.
+			magnetizingCurrent = (int)(magnetizingCurrentFine >> 18);
+			//	magnetizingCurrentAmps_times8 = __builtin_mulss((int)magnetizingCurrent, (int)currentSensorAmpsPerVoltTimes5) >> 11;  // 5/4*currentSensorAmpsPerVolt / 4096 * #ticks = amps.  So amps*8 cancels it down to >>11.
+
+			////////////////////////////////////////////////////////////////////////////
+			//; 2. To Compute Slip speed in RPS:
+			//;    VelSlipRPS = (1/fRotorTmConst) * (Iq/Imag) / (2*pi)
+			//     rotorTimeConstantArray2[] entries are 1/fRotorTmConst * 1/(2*pi) * 2^11.  I couldn't scale any higher than 2^11 so as to keep them integers. (this is not 100% true now.  haha.)
+			//	   VelSlipRPS = (ARRAY[] * Iq) / Imag.
+			//	   Let slipSpeedNumerator = (ARRAY[] * Iq).  Then, do the bit shift down first, and the divide by magnetizing current afterwards to prevent the loss of resolution.
+			/////////////////////////////////////////////////////////////////////////////////////////////////////	
+			if (magnetizingCurrent == 0) {
+				return;  // there is no rotor flux angle, since there is no field.  So, keep the angle the same as it was before??
+			}
+			else if (Iq == 0) {
+				slipSpeedRPS_times16 = 0;  // If the numerator is 0, the whole thing is zero.
+			}
+			else {  // magnetizingCurrent != 0, slipSpeedNumerator != 0
+					slipSpeedNumerator = __builtin_mulus((unsigned int)rotorTimeConstantArray2[myRotorTest.timeConstantIndex], (int)Iq) >> 7; // Must scale down by 2^11 if you want units to be rev/sec.  But that's too grainy.  So, let's only scale down by 2^7 so you get slip speed in rev/sec * 16, rather than just rev/sec
+				if (magnetizingCurrent > 0) {
+					if (slipSpeedNumerator > 0L) {
+						if (slipSpeedNumerator > __builtin_mulss((int)magnetizingCurrent,(int)MAX_SLIP_SPEED_RPS_TIMES16)) {
+							slipSpeedRPS_times16 = MAX_SLIP_SPEED_RPS_TIMES16;  // must be positive slip speed
+						}
+						else {
+							slipSpeedRPS_times16 = __builtin_divsd((long)slipSpeedNumerator, (int)magnetizingCurrent);  // must be positive slip speed.
+						}
+					}
+					else { // if (slipSpeedNumerator < 0).  It can't be zero, since that case was already accounted for.
+						if (-slipSpeedNumerator > __builtin_mulss((int)magnetizingCurrent,(int)MAX_SLIP_SPEED_RPS_TIMES16)) {
+							slipSpeedRPS_times16 = -MAX_SLIP_SPEED_RPS_TIMES16;  // must end with negative slip speed.
+						}
+						else {
+							slipSpeedRPS_times16 = __builtin_divsd((long)slipSpeedNumerator, (int)magnetizingCurrent);  // this is negative result.
+						}
+					}
 				}
-				else {
-					slipSpeedRPS_times16 = __builtin_divsd((long)slipSpeedNumerator, (int)magnetizingCurrent);  // this is positive result.
+				else {  // magnetizingCurrent < 0
+					if (slipSpeedNumerator > 0) {  // POS / NEG = NEG.
+						if (slipSpeedNumerator > __builtin_mulss((int)(-magnetizingCurrent),(int)MAX_SLIP_SPEED_RPS_TIMES16)) {  //
+							slipSpeedRPS_times16 = -MAX_SLIP_SPEED_RPS_TIMES16;  // must be negative slip speed.  pos/neg = neg.
+						}
+						else {
+							slipSpeedRPS_times16 = __builtin_divsd((long)slipSpeedNumerator, (int)magnetizingCurrent);  // must be negative slip speed.
+						}
+					}
+					else {  // slipSpeedNumerator < 0, magnetizingCurrent < 0.  So, slipSpeed will be positive below.
+						if (slipSpeedNumerator < __builtin_mulss((int)magnetizingCurrent,(int)MAX_SLIP_SPEED_RPS_TIMES16)) {  // if it's more negative than the right hand side...
+							slipSpeedRPS_times16 = MAX_SLIP_SPEED_RPS_TIMES16;  // must end with positive slip speed.  neg / neg = pos.
+						}
+						else {
+							slipSpeedRPS_times16 = __builtin_divsd((long)slipSpeedNumerator, (int)magnetizingCurrent);  // this is positive result.
+						}
+					}
 				}
 			}
-		}
+			///////////////////////////////////////////////////////////////////////////////////
+			//; 3. Rotor flux speed in RPS:
+			//;    VelFluxRPS = numPolePairs * VelMechRPS + VelSlipRPS
+			//     RPS_times16 was gloriously found in the main interrupt. It is in [-3200, 3200], which means [-12000RPM, 12000RPM].  I will make sure that normal driving is positive rpm.
+			//     savedValues2.numberOfPolePairs is 2 in the case of my motor, because the RPM is listed as 1700 with 60 Hz 3 phase input.  1 pole pair would list the rpm as around 3400 with 60 Hz 3 phase input.
+			//	rotorFluxRPS_times16 = savedValues2.numberOfPolePairs * RPS_times16 + slipSpeedRPS_times16;  // There's no danger of integer overflow for 1 or 2 pole pairs, so just do normal multiply.
+			
+			rotorFluxRPS_times16 = savedValues2.numberOfPolePairs*RPS_times16 + slipSpeedRPS_times16;  // There's no danger of integer overflow, so just do normal multiply.  Larger number of pole pairs means lower rpm, so it all evens out.
+
+			//;  Rotor flux angle (radians):
+			//;     AngFlux = AngFlux + fLoopPeriod * 2 * pi * VelFluxRPS
+			//;  Rotor flux angle (0 to 511 ticks):
+			//      AngFlux = AngFlux + fLoopPeriod * 512 * VelFluxRPS.  
+			//   Now, I don't have VelFluxRPS.  Too darn grainy.  I found rotorFluxRPS_times16 above.  So.....
+			//      AngFlux = AngFlux + fLoopPeriod * 32 * rotorFluxRPS_times16, because 32 * 16 = 512.
+			//   OK, fLoopPeriod = 0.0001 sec.  I don't want to divide here, so let's do a trick that is much faster.
+			//   0.0001sec * 32 * 2^24 = 53687.09.  So, I'll just multiply by 53687, and shift down by 2^24 afterwards.  Actually, let's keep 2^7 worth of extra resolution, because angleChange was too grainy before.
+			//	angleChange_times128 = (53687u * rotorFluxRPS_times16) >> 17;  // must shift down by 24 eventually, but let's keep a higher resolution here.  So, only shift down by 17.  Keeping 7 bits.
+			angleChange_times128 = __builtin_mulus(53687u, (int)rotorFluxRPS_times16) >> 17;  // must shift down by 24 eventually, but let's keep a higher resolution here.  So, only shift down by 17.  Keeping 7 bits.
+			// angleChange_times128 must be in [-5242, 5242] assuming all the clamping I'm doing above.
+			rotorFluxAngle_times128 += (unsigned)angleChange_times128;  // if it overflows, so what.  it will wrap back around.  To go from [0,65536] --> [0,512], divide by by 128.  higher resolution rotor flux angle saved here.
+			rotorFluxAngle = (rotorFluxAngle_times128 >> 7);
+		break;
+		case TOYOTA_MGR_MOTOR:	// Toyota MGR hybrid motor does 2 electrical revolutions per 1 resolver revolution.
+			temp = POSCNT;			// it will be in [0,1023).  4 times the 256 ticks coming from the resolver to encoder board.  Two electrical revolutions per index pulse.  It's my resolver to encoder board, so I ought to know!!!  haha.
+			if (temp < 10000) { // I initialize POSCNT to an absurdly big value (15000).  It won't be in that range for long though.  But during this time, it could vary from around 14500 up to 15500.  As soon as an index pulse comes along, it will forever be trapped in [0, 511].
+				myFirstEncoderIndexPulseTest.testRunning = 0; // poscnt is in [0,1023].  But the actual electrical angle is in [0,511]
+				temp += myAngleOffsetTest.currentAngleOffset; 	// currentAngleOffset was found back when the motor had to be configured.  It is normalized to units of [0,511] electrical "degrees". 
+			}
+			else {  // there hasn't been an index pulse yet.  
+				temp += myFirstEncoderIndexPulseTest.currentAngleOffset; 	// currentAngleOffset was found back when the motor had to be configured.  It is in units of [0,511] electrical "degrees". 
+			}
+			temp &= 511;		// Now, rotorFluxAngle is once again inside [0,511].
+			rotorFluxAngle = temp;  // rotorFluxAngle can't be negative.
+				// There are NUM_POLE_PAIRS index pulses per mechanical revolution when using the resolver to encoder board ONLY FOR THE LEAF MOTOR!!!!  For the toyota motor, there are 2
+
+			// permanent magnet AC motor mechanical speed computation.
+			// do this later.
+			poscnt = POSCNT;
+			diffPos = poscnt - poscntOld; // if this is > 512, make it diffPos - 1024. That way, let's say poscnt just went from 0 to 1023 (negative rotation).  We can call that diffPos = -1.
+			poscntOld = poscnt;
+			if (diffPos > 512) { // assume negative rotation.  
+				diffPos = diffPos - 1024;
+			}
+			else if (diffPos < -512) { // For example, let's say poscntOld was 511, and now poscnt is 0 (positive rotation).  We want diffPos to be 1.  So, we do diffPos + 512.
+				diffPos = diffPos + 1024; // 
+			}
+			ticksPerSecInstantaneous = __builtin_mulss(10000,(int)diffPos);  // This will be very erratic.  Wild swings, so smooth it out below with a filter that takes almost 1/50sec to converge to within 99.9%.
+			ticksPerSecAverage_times256   	//= (63*ticksPerSecAverage_times64)/64 + 1*ticksPerSecInstantaneous) / 64 * 64;
+									 		//= (64*(ticksPerSecAverage_times64/64) - 1*ticksPerSecAverage + 1*ticksPerSecInstantaneous) / 64 * 64
+									= ticksPerSecAverage_times256 - ticksPerSecAverage + (long)ticksPerSecInstantaneous;
+			ticksPerSecAverage = ticksPerSecAverage_times256 >> 8;
+			// Below line assumes 512 ticks per electrical revolution.  The resolver to encoder has 256 ticks, and then I do 4 times the resolution.  But then the stupid toyota MGR does 2 electrical revolutions per index pulse!!  So, 1024 ticks per 2 electrical revolutions.  So, 512 ticks per electrical revolution.
+			RPS_times16 = __builtin_divsd((long)ticksPerSecAverage, (int)(savedValues2.numberOfPolePairs << 5));	//  x ticks/sec * mechanicalRevolutions/(polePairs * 512 ticks) = mechanicalRevolutions/sec.  16mechanicalRev/(16sec) = RPS_times16.  There are 512 ticks per electrical revolution with my resolver to encoder after the resolution quadrupling that happens when I intiialize the quadrature encoder interface.
+		break;
+		case NISSAN_LEAF_MOTOR:
+			temp = POSCNT;		// it will be in [0,512).  It's my resolver to encoder board, so I ought to know!!!  haha.
+		
+			if (temp < 10000) { // I initialize POSCNT to an absurdly big value (15000).  It won't be in that range for long though.  But during this time, it could vary from around 14500 up to 15500.  As soon as an index pulse comes along, it will forever be trapped in [0, 511].
+				myFirstEncoderIndexPulseTest.testRunning = 0;
+				temp += myAngleOffsetTest.currentAngleOffset; 	// currentAngleOffset was found back when the motor had to be configured.  It is in units of [0,511] electrical "degrees". 
+				temp &= 511;		// Now, rotorFluxAngle is once again inside [0,511].
+				rotorFluxAngle = temp;  // rotorFluxAngle can't be negative.
+				// There are NUM_POLE_PAIRS index pulses per mechanical revolution when using the resolver to encoder board WITH THE LEAF MOTOR!!  The friggen toyota MGR has 2 index pulses in 4 electrical revolutions, and in 1 mechanical revolution.
+			}
+			else {  // there hasn't been an index pulse yet.  
+				temp += myFirstEncoderIndexPulseTest.currentAngleOffset; 	// currentAngleOffset was found back when the motor had to be configured.  It is in units of [0,511] electrical "degrees". 
+				temp &= 511;		// Now, rotorFluxAngle is once again inside [0,511].
+				rotorFluxAngle = temp;  // rotorFluxAngle can't be negative.
+			}
+			poscnt = POSCNT;		// poscnt is used elsewhere in the program.  Don't modify it like you did with 'temp'.
+			diffPos = poscnt - poscntOld; // if this is > 256, make it diffPos - 512. That way, let's say poscnt just went from 0 to 511 (negative rotation)
+			poscntOld = poscnt;
+			if (diffPos > 255) { // assume negative rotation.  For example, maybe poscntOld was 0 and now poscnt is 511.  diffPos would be 511.
+				diffPos = diffPos - 512;
+			}
+			else if (diffPos < -255) { // For example, let's say poscntOld was 511, and now poscnt is 0 (positive rotation).  We want diffPos to be 1.  So, we do diffPos + 512.
+				diffPos = diffPos + 512;
+			}
+			ticksPerSecInstantaneous = __builtin_mulss(10000,(int)diffPos);  // This will be very erratic.  Wild swings, so smooth it out below with a filter that takes almost 1/50sec to converge to within 99.9%.
+			ticksPerSecAverage_times256   	//= (63*ticksPerSecAverage_times64)/64 + 1*ticksPerSecInstantaneous) / 64 * 64;
+									 		//= (64*(ticksPerSecAverage_times64/64) - 1*ticksPerSecAverage + 1*ticksPerSecInstantaneous) / 64 * 64
+									= ticksPerSecAverage_times256 - ticksPerSecAverage + (long)ticksPerSecInstantaneous;
+			ticksPerSecAverage = ticksPerSecAverage_times256 >> 8;
+			// Below line assumes 512 ticks per electrical revolution.  The resolver to encoder has 256 ticks from that board I made, and then I double the resolution when it initizlizes the Quadrature Encoder Interface.
+			RPS_times16 = __builtin_divsd((long)ticksPerSecAverage, (int)(savedValues2.numberOfPolePairs << 5));	//  x ticks/sec * mechanicalRevolutions/(polePairs * 512 ticks) = mechanicalRevolutions/sec.  16mechanicalRev/(16sec) = RPS_times16.  There are 512 ticks per electrical revolution with my resolver to encoder after the resolution doubling that happens when I intiialize the quadrature encoder interface.
+		break;
+		case PERMANENT_MAGNET_MOTOR_WITH_ENCODER:
+			// There are 'n' POSCNT values that would work in [0, NUM_ENCODER_TICKS*4], where 'n' is the number of pole pairs.
+			// POSCNT is in [0, NUM_ENCODER_TICKS*4].  An index pulse resets POSCNT back to zero, or to MAX_POSCNT if counting down.
+			// 
+			temp = POSCNT;  // POSCNT = encoderTicks * 4.
+
+			if (temp < 10000) { // I initialize POSCNT to an absurdly big value (15000).  It won't be in that range for long though.  But during this time, it could vary from around 14500 up to 15500.  As soon as an index pulse comes along, it will forever be trapped in [0, 511].
+				myFirstEncoderIndexPulseTest.testRunning = 0;
+
+				tempLong = __builtin_muluu((unsigned int)temp,(unsigned int)savedValues2.numberOfPolePairs) << 7; 	// OK, this is friggen confusing.  You have to chop up [0, MAXCNT] into numberOfPolePairs pieces.  Then, you have to find what point POSCNT is at inside of one of those pieces.  Then, the rotor flux angle is basically where you are in that interval, on a normalized scale of [0, 511]																												// temp = temp * numberOfPolePairs * 128.  Multiply by 128 because temp/4 is the number of encoder ticks. 
+				temp = __builtin_divud((unsigned long)tempLong, (unsigned int)savedValues2.encoderTicks);
+				temp += myAngleOffsetTest.currentAngleOffset;
+				rotorFluxAngle = temp & 511;
+			}
+			else {  // there hasn't been an index pulse yet. 
+				tempLong = __builtin_muluu((unsigned int)temp,(unsigned int)savedValues2.numberOfPolePairs) << 7; 	// OK, this is friggen confusing.  You have to chop up [0, MAXCNT] into numberOfPolePairs pieces, where each piece is of width [0,511].  Then, you can quickly find the normalized rotor flux angle in [0,511].																												// temp = temp * numberOfPolePairs * 128.  Multiply by 128 because temp/4 is the number of encoder ticks. 
+				temp = __builtin_divud((unsigned long)tempLong, (unsigned int)savedValues2.encoderTicks);
+				temp += myFirstEncoderIndexPulseTest.currentAngleOffset; 	// currentAngleOffset was found back when the motor had to be configured.  It is in units of [0,511] electrical "degrees". 
+				rotorFluxAngle = temp & 511; 
+			}
+
+			poscnt = POSCNT;		// poscnt is used elsewhere in the program.  Don't modify it like you did with 'temp'.
+			diffPos = poscnt - poscntOld; // if this is > , make it diffPos - 512. That way, let's say poscnt just went from 0 to 511 (negative rotation)
+			poscntOld = poscnt;
+			if (diffPos > (savedValues2.encoderTicks << 1)) { // assume negative rotation.  For example, maybe poscntOld was 0 and now poscnt is encoderTicks * 4.  diffPos would be encoderTicks*4.
+				diffPos = diffPos - (savedValues2.encoderTicks << 2);
+			}
+			else if (diffPos < -(savedValues2.encoderTicks << 1)) { // For example, let's say poscntOld was 511, and now poscnt is 0 (positive rotation).  We want diffPos to be 1.  So, we do diffPos + 512.
+				diffPos = diffPos + (savedValues2.encoderTicks << 2);
+			}
+			ticksPerSecInstantaneous = __builtin_mulss(10000,(int)diffPos);  // This will be very erratic.  Wild swings, so smooth it out below with a filter that takes almost 1/50sec to converge to within 99.9%.
+			ticksPerSecAverage_times256   	//= (63*ticksPerSecAverage_times64)/64 + 1*ticksPerSecInstantaneous) / 64 * 64;
+									 		//= (64*(ticksPerSecAverage_times64/64) - 1*ticksPerSecAverage + 1*ticksPerSecInstantaneous) / 64 * 64
+									= ticksPerSecAverage_times256 - ticksPerSecAverage + (long)ticksPerSecInstantaneous;
+			ticksPerSecAverage = ticksPerSecAverage_times256 >> 8;
+			// ticks/sec * rev/ticks * 16 = rev/sec * 16 = ticksPerSecAverage * rev / (savedValues2.encoderTicks * 4) * 16 = ticksPerSecAverage * 4 / savedValues2.encoderTicks.  
+			RPS_times16 = __builtin_divsd(ticksPerSecAverage << 2, savedValues2.encoderTicks);	//  x ticks/sec * mechanicalRevolutions/(polePairs * 512 ticks) = mechanicalRevolutions/sec.  16mechanicalRev/(16sec) = RPS_times16.  There are 512 ticks per electrical revolution with my resolver to encoder after the resolution doubling that happens when I intiialize the quadrature encoder interface.
+
+		break;
 	}
-///////////////////////////////////////////////////////////////////////////////////
-
-//; 3. Rotor flux speed in RPS:
-//;    VelFluxRPS = numPolePairs * VelMechRPS + VelSlipRPS
-//     RPS_times16 was gloriously found in the main interrupt. It is in [-3200, 3200], which means [-12000RPM, 12000RPM].  I will make sure that normal driving is positive rpm.
-//     savedValues2.numberOfPolePairs is 2 in the case of my motor, because the RPM is listed as 1700 with 60 Hz 3 phase input.  1 pole pair would list the rpm as around 3400 with 60 Hz 3 phase input.
-//	rotorFluxRPS_times16 = savedValues2.numberOfPolePairs * RPS_times16 + slipSpeedRPS_times16;  // There's no danger of integer overflow for 1 or 2 pole pairs, so just do normal multiply.
-
-		rotorFluxRPS_times16 = savedValues2.numberOfPolePairs*RPS_times16 + slipSpeedRPS_times16;  // There's no danger of integer overflow, so just do normal multiply.  Larger number of pole pairs means lower rpm, so it all evens out.
-
-//;  Rotor flux angle (radians):
-//;     AngFlux = AngFlux + fLoopPeriod * 2 * pi * VelFluxRPS
-//;  Rotor flux angle (0 to 511 ticks):
-//      AngFlux = AngFlux + fLoopPeriod * 512 * VelFluxRPS.  
-//   Now, I don't have VelFluxRPS.  Too darn grainy.  I found rotorFluxRPS_times16 above.  So.....
-//      AngFlux = AngFlux + fLoopPeriod * 32 * rotorFluxRPS_times16, because 32 * 16 = 512.
-//   OK, fLoopPeriod = 0.0001 sec.  I don't want to divide here, so let's do a trick that is much faster.
-//   0.0001sec * 32 * 2^24 = 53687.09.  So, I'll just multiply by 53687, and shift down by 2^24 afterwards.  Actually, let's keep 2^7 worth of extra resolution, because angleChange was too grainy before.
-//	angleChange_times128 = (53687u * rotorFluxRPS_times16) >> 17;  // must shift down by 24 eventually, but let's keep a higher resolution here.  So, only shift down by 17.  Keeping 7 bits.
-	angleChange_times128 = __builtin_mulus(53687u, (int)rotorFluxRPS_times16) >> 17;  // must shift down by 24 eventually, but let's keep a higher resolution here.  So, only shift down by 17.  Keeping 7 bits.
-	// angleChange_times128 must be in [-5242, 5242] assuming all the clamping I'm doing above.
-	rotorFluxAngle_times128 += (unsigned)angleChange_times128;  // if it overflows, so what.  it will wrap back around.  To go from [0,65536] --> [0,512], divide by by 128.  higher resolution rotor flux angle saved here.
-	rotorFluxAngle = (rotorFluxAngle_times128 >> 7);
 }
 
 void ClampVdVq() {
@@ -1259,8 +933,8 @@ void ClampVdVq() {
 		big = (int)(__builtin_mulsu((int)big, (unsigned)scale) >> 16);
 		IqRefNew = (int)(__builtin_mulsu((int)IqRef, (unsigned)scale) >> 16);
 		IdRefNew = (int)(__builtin_mulsu((int)IdRef, (unsigned)scale) >> 16);  // what if I only did this to IdRef instead of both of them?  Then it would be field weakening.  I'll compare later.
-		IqRef = IqRefNew + (__builtin_mulus(7,IqRef - IqRefNew) >> 3);
-		IdRef = IdRefNew + (__builtin_mulus(7,IdRef - IdRefNew) >> 3);
+		IqRef = IqRefNew + (__builtin_mulus(3,IqRef - IqRefNew) >> 2);
+		IdRef = IdRefNew + (__builtin_mulus(3,IdRef - IdRefNew) >> 2);
 	}
 	else {
 		voltageDiskExceeded = 0;
@@ -1362,15 +1036,9 @@ void SpaceVectorModulation() {
 		pdc3 = MAX_DUTY;
 	}
 	// pdc1, 2, and 3 can never be negative because of above.  So, don't bother to test that.
-#ifndef DEBUG_MODE
 	PDC1 = pdc1;
 	PDC2 = pdc2;
 	PDC3 = pdc3;
-#else
-	PDC1 = 1000;
-	PDC2 = 1000;
-	PDC3 = 1000;
-#endif
 }
 
 void ClearAllFaults() {
@@ -1664,7 +1332,7 @@ void InitQEI() {
 			QEICONbits.QEIM = 0b111; 	// enable QEI x4 mode with position counter reset by MAXCNT.  
 			QEICONbits.PCDOUT = 1; 	 	// Position Counter Direction Status Output Enable (QEI logic controls state of I/O pin)
 			QEICONbits.POSRES = 0;		// Position counter is not reset by index pulse. But there's no index pulse in my case.  haha. This is ignored in this situation.
-			QEICONbits.SWPAB = 0;		// don't swap QEA and QEB inputs.
+			QEICONbits.SWPAB = 1;		// don't swap QEA and QEB inputs.
 		
 			DFLTCONbits.CEID = 1; 		// Interrupts due to position count errors disabled
 			DFLTCONbits.QEOUT = 1; 		// Digital filter outputs enabled.  QEA, QEB. 0 means normal pin operation.
@@ -1697,7 +1365,7 @@ void InitQEI() {
 			DFLTCONbits.IMV = 0b01;  	// INDEX pulse MUST happen when QEA is HIGH. It didn't work for QEA being low with the Leaf motor.
 			MAXCNT = 511; 		// If going backwards, poscnt will go from 0 to maxcnt, ONLY IF it is caused by an index pulse!!!
 								// Use this for the AC controller.  It's easier to measure speed of rotor with this setting, if there's no INDEX signal on the encoder.
-			POSCNT = 15000;  	// It statts in an unknown state before the index pulse happens. Do this so I can know the index pulse hasn't happened yet.  It will vary from 14000 up to 16000 or whatever, and suddenly be forever trapped in 0,511 once the index pulse happens.
+			POSCNT = 15000;  	// It starts in an unknown state before the index pulse happens. Do this so I can know the index pulse hasn't happened yet.  It will vary from 14000 up to 16000 or whatever, and suddenly be forever trapped in 0,511 once the index pulse happens.
 			myFirstEncoderIndexPulseTest.startTime = 0;
 			myFirstEncoderIndexPulseTest.currentAngleOffset = 0;
 			myFirstEncoderIndexPulseTest.testRunning = 1;
@@ -1718,13 +1386,13 @@ void InitQEI() {
 			DFLTCONbits.IMV = 0b01;  	// INDEX pulse MUST happen when QEA is HIGH and QEB is LOW. It didn't work for other combinations.
 			MAXCNT = 1023; 		// If going backwards, poscnt will go from 0 to maxcnt, ONLY IF it is caused by an index pulse!!!
 								// Use this for the AC controller.  It's easier to measure speed of rotor with this setting, if there's no INDEX signal on the encoder.
-			POSCNT = 15000;  	// It statts in an unknown state before the index pulse happens. Do this so I can know the index pulse hasn't happened yet.  It will vary from 14000 up to 16000 or whatever, and suddenly be forever trapped in 0,511 once the index pulse happens.
+			POSCNT = 15000;  	// It starts in an unknown state before the index pulse happens. Do this so I can know the index pulse hasn't happened yet.  It will vary from 14000 up to 16000 or whatever, and suddenly be forever trapped in 0,511 once the index pulse happens.
 			myFirstEncoderIndexPulseTest.startTime = 0;
 			myFirstEncoderIndexPulseTest.currentAngleOffset = 0;
 			myFirstEncoderIndexPulseTest.testRunning = 1;
 		break;
 		case PERMANENT_MAGNET_MOTOR_WITH_ENCODER:
-			QEICONbits.QEIM = 0b110; 	// enable QEI x4 mode with position counter reset by INDEX pulse. There are 2 electrical revolutions per index pulse with that motor type.  This works out nicely, so that you get 1024 ticks per 2 electrical revolutions per 1024 ticks, so 512 ticks per electrical revolution.
+			QEICONbits.QEIM = 0b110; 	// enable QEI x4 mode with position counter reset by INDEX pulse. 
 			QEICONbits.PCDOUT = 1; 	 	// Position Counter Direction Status Output Enable (QEI logic controls state of I/O pin)
 			QEICONbits.POSRES = 1;		// Position counter is reset by index pulse.	
 			QEICONbits.SWPAB = 0;		// don't swap QEA and QEB inputs.  
@@ -1736,13 +1404,14 @@ void InitQEI() {
 										// You can do at most 30,000,000/(3*16) = ??? of those pulses per second.  So, you can have at most
 										// ??? * 2 clock counts per second, since resolution has been multiplied by 2 (QEA and QEB up and down transitions all cause a pulse to be seen by the microcontroller..)  
 										// 
-			DFLTCONbits.IMV = 0b11;  	// INDEX pulse MUST happen when QEA & QEB is HIGH. It didn't work for QEA being low with the Leaf motor.
+			DFLTCONbits.IMV = 0b00;  	// INDEX pulse MUST happen when QEA & QEB is low. It didn't work for QEA being low with the Leaf motor.
 			MAXCNT = (savedValues2.encoderTicks << 2) - 1; 		// If going backwards, poscnt will go from 0 to maxcnt, ONLY IF it is caused by an index pulse!!!  Multiply by 4 since I"m doing 4* the resolution.
 								// Use this for the AC controller.  It's easier to measure speed of rotor with this setting, if there's no INDEX signal on the encoder.
-			POSCNT = 15000;  	// It statts in an unknown state before the index pulse happens. Do this so I can know the index pulse hasn't happened yet.  It will vary from 14000 up to 16000 or whatever, and suddenly be forever trapped in 0,511 once the index pulse happens.
+			POSCNT = 15000;  	// It starts in an unknown state before the index pulse happens. Do this so I can know the index pulse hasn't happened yet.  It will vary from 14000 up to 16000 or whatever, and suddenly be forever trapped in [0,MAX_CNT] once the index pulse happens.
 			myFirstEncoderIndexPulseTest.startTime = 0;
 			myFirstEncoderIndexPulseTest.currentAngleOffset = 0;
 			myFirstEncoderIndexPulseTest.testRunning = 1;
+//			encoderTicksDivPolePairs = __builtin_divsd((long int)savedValues2.encoderTicks,(int)savedValues2.numberOfPolePairs);
 		break;
 	}
 }
@@ -2080,6 +1749,483 @@ void GrabDataSnapshot() {
 	myDataStream.temperature = offset;
 	myDataStream.timer = counter1k - myDataStream.startTime;
 }
+
+void ComputeZeroCurrentOffsets() {
+	int now;
+	int localCurrent1, localCurrent2;
+	long int vRef1Sum = 0;
+	long int vRef2Sum = 0;
+	int i = 0;
+
+	for (i = 0; i < 256; i++) {
+		now = counter10k;
+		while (counter10k == now) {
+			ClrWdt();
+		} // a new A/D value will be available.
+		localCurrent1 = ADCurrent1;
+		localCurrent2 = ADCurrent2;
+		vRef1Sum += (long)localCurrent1;
+		vRef2Sum += (long)localCurrent2;
+	}
+	vRef1 = (vRef1Sum >> 8);
+	vRef2 = (vRef2Sum >> 8);
+	if (vRef1 > 512 + 50 || vRef1 < 512 - 50 || vRef2 > 512 + 50 || vRef2 < 512 - 50) {
+ 		faultBits |= VREF_FAULT;
+	}
+}
+
+void ChargeUpCapacitorBank() {
+	O_LAT_PRECHARGE_RELAY = 1;  // turn on precharge relay.
+	DelayTenthsSecond(savedValues.prechargeTime + 1);  // Make sure at least 5 time constants for precharge time!!
+	O_LAT_CONTACTOR = 1;  // close main contactor.
+	DelayTenthsSecond(2);
+	O_LAT_PRECHARGE_RELAY = 0;  // turn on precharge relay.
+}
+
+void UpdateCounter1k() {
+	if (TMR1 > 115) {
+		counter1k++;
+		TMR1 = 0;
+	}
+}
+
+void RunPITest() {
+//	myPI.error_d = IdRef - Id;
+//	myPI.error_q = IqRef - Iq;
+	if ((counter10k - myPI.previousTestCompletionTime) < 2000) {  // wait 0.2 seconds between tests.  That gives Id and Iq a chance to go back to zero.
+		IdRef = 0;
+		IqRef = 0;
+	}
+	else {  // I'm running the PI loop test on a particular Kp and Ki to see if it passes the convergence test below.
+		IdRef = 0;  // 512 on a scale of 0 to 4096 corresponds to 75 amps for a LEM Hass 300-s.  Because 4096 means 600amps.
+		IqRef = 511;
+	
+		if (myPI.iteration == 0) {
+			myPI.iteration++;
+		}
+		else {  // First, deal with the indicators that things are very very bad, and you need to start over with small Kp and Ki, but a larger maxIterationsBeforeZeroCrossing.
+			if (Iq > IqRef + 300) {  // Truly horrible.  Start over.  The PI values are way to big at this point.
+				currentMaxIterationsBeforeZeroCrossing += 20;
+				InitPIStruct();
+				myPI.testRunning = 1;
+				return;
+			}
+			if (Iq < -300) {  // Horrible oscillation.  We have too large of PI values.  Start over with a larger maxIterationsBeforeZeroCrossing.
+				currentMaxIterationsBeforeZeroCrossing += 20;
+				InitPIStruct();
+				myPI.testRunning = 1;
+				return;				
+			}
+			if (myPI.error_q > 300 && myPI.zeroCrossingIndex >= 0) {  // Iq already went above IqRef, but now Iq is way less than IqRef.  It's not converging, it's oscillating BADLY. move on!
+				currentMaxIterationsBeforeZeroCrossing += 20;
+				InitPIStruct();
+				myPI.testRunning = 1;	
+				return;				
+			}
+
+			if (myPI.error_q < -150) { // -80) {  // If Iq > IqRef + 160.  We don't want overshoot!!
+				MoveToNextPIValues();
+			}
+			else if (Iq < -200) {  //  Iq starts as zero, and should head up to 511.  If it went negative.  That's not good.
+				MoveToNextPIValues();
+			}
+			else if (myPI.zeroCrossingIndex == -1 && myPI.iteration > myPI.maxIterationsBeforeZeroCrossing) {  // myPI.zeroCrossingIndex == -1 means error hasn't crossed zero yet.  It has only been positive.
+				MoveToNextPIValues();  // CONVERGENCE TOO SLOW!!!  Move on!
+			}
+			else if (myPI.error_q > 150 && myPI.zeroCrossingIndex >= 0) {  // Iq already went above IqRef, but now Iq is way less than IqRef.  It's not converging, it's oscillating. move on!
+				MoveToNextPIValues();
+			}
+			else {
+				if (myPI.error_q <= 0 && myPI.zeroCrossingIndex == -1) {  // if it's crossing zero for the first time, record the location.
+					myPI.zeroCrossingIndex = myPI.iteration;
+				}
+				myPI.iteration++;
+				if (myPI.iteration >= 750) {  // 750 iterations of the PI loop happened, and it passed all the rigorous requirements.  Save Kp & Kq constants.  They are keepers!
+					savedValues.Kp = myPI.Kp;
+					savedValues.Ki = myPI.Ki;
+					myPI.testRunning = 0;  // You found a good PI value, so quit hunting!
+					myPI.testFailed = 0;
+					myPI.testFinished = 1;
+					currentMaxIterationsBeforeZeroCrossing = 20;
+					return;
+				}
+			}
+			if (myPI.Kp > 20000 || currentMaxIterationsBeforeZeroCrossing >= 400) {  // True, abject failure.  So sad.
+				currentMaxIterationsBeforeZeroCrossing = 20;
+				InitPIStruct();
+				myPI.testFailed = 1;
+				myPI.testFinished = 1;
+			}
+		}
+	}
+}
+
+void RunPITest2() {
+	if ((counter10k - myPI.previousTestCompletionTime) < 1000) {  // wait 0.1 seconds between tests.  That gives Id and Iq a chance to go back to zero.
+		IdRef = 0;
+		IqRef = 0;
+	}
+	else {  // I'm running the PI loop test on a particular Kp and Ki to see if it passes the convergence test below.
+		IdRef = 0;  // 512 on a scale of 0 to 4096 corresponds to 75 amps for a LEM Hass 300-s.  Because 4096 means 600amps.
+		IqRef = 511;
+		bigArray1[myPI.iteration] = myPI.error_d;
+		bigArray2[myPI.iteration] = myPI.error_q;
+		if (myPI.iteration < 254) {
+			myPI.iteration++;
+		}
+		else {
+			InitPIStruct();
+			myPI.testFinished = 1;
+		}
+	}
+}
+
+// In here we get the torque command from the throttle and limit it based on temperature and battery current. It doesn't have to be computed very frequently.  every 128 times is no more than 78Hz.
+void GetCurrentRadiusRefRef() {
+	static long throttleSum = 0L;
+	static int counter128 = 0;
+	static long temperatureSum = 0L;
+	static int temperatureMultiplier = 0;
+	static long batteryCurrentLong = 0L;
+	static long batteryCurrentSum = 0L;
+	static int sign = 0;
+	static int temp = 0;
+
+	if (newADValuesAvailable) {
+		newADValuesAvailable = 0;
+		// This measures the throttle
+		rawThrottle = ADCBUF1;		// rawThrottle is a global variable.
+		throttleSum += rawThrottle;
+		temperatureSum += ADCBUF0;
+		batteryCurrentLong = __builtin_mulss(Ia,pdc1) + __builtin_mulss(Ib,pdc2) + __builtin_mulss(Ic,pdc3);  // batteryCurrent is in [-4096*sqrt(3)/2, 4096*sqrt(3)/2] = [-3547, 3547].
+		batteryCurrentSum += batteryCurrentLong;
+		counter128++;
+		if (counter128 >= 128) {
+			counter128 = 0;
+			throttle = (throttleSum >> 7);  // in [0, 1023].  throttle is global variable.
+			temperatureBasePlate = (temperatureSum >> 7); // in [0,1023].  temperatureBasePlate is global variable.
+			if (temperatureBasePlate < 147) temperatureBasePlate = 147; // clamp it so you get an integer when converting to the variable resistance.  This assumes +5v -- 1k -- 10k thermistor --- 4.7k --- ground.  P/N: NTCALUG03A103G
+			batteryCurrentNormalized = __builtin_divsd(batteryCurrentSum >> 7,MAX_DUTY);  // batteryCurrentNormalized is global.
+			throttleSum = 0;
+			temperatureSum = 0;
+			batteryCurrentSum = 0;
+		
+			// Is there a throttle fault?
+			if (throttle <= savedValues.throttleFaultPosition) {
+				faultBits |= THROTTLE_FAULT;
+			}
+			if (savedValues2.throttleType == 1) {  // 0-5k pot sort of thing rather than hall effect.
+				throttle = 1023 - throttle;  // invert it.
+			}
+			// I think I'll work my way left to right.  ThrottleFaultVoltage < ThrottleMaxRegen < ThrottleMinRegen < ThrottleMin < ThrottleMax 
+//			if (throttle < savedValues.maxRegenPosition) {  //First clamp it below.
+//				throttle = savedValues.maxRegenPosition;	
+//			}
+//			else if (throttle > savedValues.maxThrottlePosition) {	// And clamp it above!  
+//				throttle = savedValues.maxThrottlePosition;
+//			}
+//			if (throttle < savedValues.minRegenPosition) {  // It's in regen territory.  Map it from [savedValues.maxThrottleRegen, savedValues.minThrottleRegen) to [-maxMotorCurrentNormalizedRegen, 0)
+//				throttle -= savedValues.minRegenPosition;  // now it's in the range [maxThrottleRegen - minThrottleRegen, 0)
+//				throttle =	-__builtin_divsd(((long)throttle) * maxMotorCurrentNormalizedRegen, savedValues.maxRegenPosition - savedValues.minRegenPosition);
+//			}
+			if (throttle <= savedValues.minThrottlePosition) { // in the dead zone!
+				throttle = 0;
+			}
+			else { // <= throttle max is the only other option!  Map the throttle from (savedValues.minThrottlePosition, savedValues.maxThrottlePosition] to (0,maxMotorCurrentNormalized]
+				throttle -= savedValues.minThrottlePosition;
+				throttle = __builtin_divsd(__builtin_mulss(throttle, maxMotorCurrentNormalized), savedValues.maxThrottlePosition - savedValues.minThrottlePosition);
+			}
+			if (temperatureBasePlate > THERMAL_CUTBACK_START) {  // Force the throttle to cut back.
+				temperatureMultiplier = (temperatureBasePlate - THERMAL_CUTBACK_START) >> 3;  // 0 THROUGH 7.
+				if (temperatureMultiplier >= 7)
+					temperatureMultiplier = 0;
+				else {
+					// temperatureMultiplier is now 6 to 0 (for 1/8 to 7/8 current)
+					temperatureMultiplier = 7 - temperatureMultiplier;
+					// temperatureMultiplier is now 1 for 1/8, 2 for 2/8, ..., 7 for 7/8, etc.
+				}
+			}
+			else {
+				temperatureMultiplier = 8;	// Allow full throttle.
+			}
+			currentRadiusRefRef = __builtin_mulss(throttle,temperatureMultiplier) >> 3;  // scale back the current command based on temperature.  currentRadiusRefRef is global.
+	//		if (RPS_times16 < 8) {  // if less than 0.5 rev per second, make sure there's no regen.
+	//			if (currentRadiusRefRef < 0) currentRadiusRefRef = 0;
+	//		}
+			if (currentRadiusRefRef < 0) {
+				currentRadiusRefRef = -currentRadiusRefRef;
+				sign = -1;
+			}
+			else {
+				sign = 1;
+			}
+			/////////////////////////////////////////////////////////////////////////////////////////////////
+			// Keep battery amps in [-savedValues.maxBatteryAmpsRegen, savedValues.maxBatteryAmps] //////////	
+			if (batteryCurrentNormalized > maxBatteryCurrentNormalized) { // maxBatteryCurrentNormalized is positive.  Computed in "ProcessCommand", each time a new savedValues.maxBatteryAmps is found.
+				// averageDuty = (pdc1+pdc2+pdc3)/3.  But division is slow.  So, do this instead:
+				// averageDuty = 65536 * ((pdc1+pdc2+pdc3)/3) / 65536
+				// averageDuty = 21845 * (pdc1+pdc2+pdc3) / 65536
+				// averageDuty = (21845 * (pdc1+pdc2+pdc3)) >> 16
+				averageDuty = __builtin_mulss(21845, pdc1+pdc2+pdc3) >> 16;	// avoiding divide by 3.  HAHA.  
+				if (averageDuty > 0) {
+					temp = __builtin_divsd(maxBatteryCurrentNormalized,averageDuty); // 
+					if (currentRadiusRefRef > temp) {
+						currentRadiusRefRef = temp;
+					}
+				}
+			}
+			else if (batteryCurrentNormalized < -maxBatteryCurrentNormalizedRegen) { // maxRegenCurrent is negative.  Computed in "InitializeThrottleAndCurrentVariables()".
+				// averageDuty = (pdc1+pdc2+pdc3)/3.  But division is slow.  So, do this instead:
+				// averageDuty = 65536 * ((pdc1+pdc2+pdc3)/3) / 65536
+				// averageDuty = 21845 * (pdc1+pdc2+pdc3) / 65536
+				// averageDuty = (21845 * (pdc1+pdc2+pdc3)) >> 16
+				averageDuty = __builtin_mulss(21845, pdc1+pdc2+pdc3) >> 16;	// avoiding divide by 3.  HAHA.  
+				if (averageDuty > 0) {
+					temp = -__builtin_divsd(maxBatteryCurrentNormalizedRegen,averageDuty); // This is the first try at IqRefRef.  Later, other values will be calculated based on throttle.  Keep the one closest to zero.
+					if (currentRadiusRefRef < temp) {
+						currentRadiusRefRef = temp;  // if it was more negative, then make it smaller in magnitude, 'cuz there's too much friggen current going into the batteries!!!
+					}
+				}
+			}
+	
+			if (myRotorTest.testRunning) {  // I need this to run for say, 2 seconds, and then record the RPM.
+				currentRadiusRefRef = 300;
+				if (counter10k - myRotorTest.startTime > 20000) {  // 2 seconds.
+					myRotorTest.startTime = counter10k;
+					if (RPS_times16 > myRotorTest.maxTestSpeed) {
+						myRotorTest.maxTestSpeed = RPS_times16; // save the best speed so far.
+						myRotorTest.bestTimeConstantIndex = myRotorTest.timeConstantIndex;
+					}
+					myRotorTest.timeConstantIndex++;
+					if (myRotorTest.timeConstantIndex >= MAX_ROTOR_TIME_CONSTANT_INDEX) {
+						savedValues2.rotorTimeConstantIndex = myRotorTest.bestTimeConstantIndex;
+						myRotorTest.testRunning = 0;
+						myRotorTest.testFinished = 1;
+						currentRadiusRefRef = 0;
+					}
+				}
+			}
+			else if (myFirstEncoderIndexPulseTest.testRunning) {
+				// IqRefRef & IdRefRef are already found from measuring throttle.
+				if (counter10k - myFirstEncoderIndexPulseTest.startTime > 2500) {  // 0.25 seconds per attempt.  2 seconds to try all the way around the circle if it's broken into 8 pieces.  Do you only have to go half way around?
+					myFirstEncoderIndexPulseTest.startTime = counter10k;
+					if (RPS_times16 == 0) { // move to the next angle offset. This one isn't producing forward movement with the motor.
+						myFirstEncoderIndexPulseTest.currentAngleOffset += 64;  // move 1/8 of a revolution, to see if you can find a better guess at the rotor flux angle.  It starts in a unknown state.
+						myFirstEncoderIndexPulseTest.currentAngleOffset &= 511;
+					}
+					else if (RPS_times16 < 0) {
+						myFirstEncoderIndexPulseTest.currentAngleOffset += 256;  // move 1/2 of a revolution, to see if you can find a better guess at the rotor flux angle.  It starts in a unknown state.
+						myFirstEncoderIndexPulseTest.currentAngleOffset &= 511;						
+					}
+				}
+			}
+	
+			// Now that currentRadiusRefRef has been established based on throttle position, temperature, etc. we need to decide how to break it down into IdRefRef and IqRefRef.  That will depend on the type of motor we are using.
+			if (savedValues.motorType != AC_INDUCTION_MOTOR) { // 2 & 3 are permanent magnet types.  1 is induction..
+	//			K = saliencyConstant[myMotorSaliencyTest.KArrayIndex]; 
+	//			currentRadiusRefRefOverSqrt2 = __builtin_mulus(46341u,currentRadiusRefRef) >> 16;
+	//			IdRefRef = -K + unknownTriangleLeg(K, currentRadiusRefRefOverSqrt2);
+				if (myAngleOffsetTest.testRunning) {
+					IdRefRef = 400;
+					IqRefRef = 0;
+					if (counter10k - myAngleOffsetTest.startTime > 5000) {  // 0.5 seconds. 
+						myAngleOffsetTest.startTime = counter10k;
+						if (RPS_times16 == 0) {
+							myAngleOffsetTest.testRunning = 0;
+							myAngleOffsetTest.testFinished = 1;
+							myAngleOffsetTest.testFailed = 0;
+							IdRefRef = 0;
+							IqRefRef = 0;
+						}
+						else {
+							if (myAngleOffsetTest.currentAngleOffset < 511) {
+								myAngleOffsetTest.currentAngleOffset++;
+							}
+							else {
+								myAngleOffsetTest.testRunning = 0;
+								myAngleOffsetTest.testFinished = 1;
+								currentRadiusRefRef = 0;
+							}
+						}
+						savedValues2.angleOffset = myAngleOffsetTest.currentAngleOffset;
+					}
+				}
+				else {
+					IdRefRef = 0;
+					IqRefRef = sign*currentRadiusRefRef;
+	//				IdRefRef = __builtin_mulss(-myMotorSaliencyTest.KArrayIndex,currentRadiusRefRef) >> 10; // Let Id be this percent of the radius.  So, that looks like radius * that / 1024.
+	//				IqRefRef = unknownTriangleLeg(currentRadiusRefRef, IdRefRef);
+	//				IqRefRef *= sign;
+				}
+			}
+			else {
+				IdRefRef = currentRadiusRefRef;				// change this later so that IdRefRef^2 + IqRefRef^2 = currentRadiusRefRef^2.
+				IqRefRef = sign*currentRadiusRefRef;
+			}
+		}
+	}
+}
+
+void UpdateDataStream() {
+	if (myDataStream.period) {
+		if ((counter1k - myDataStream.timeOfLastTransmission) >= myDataStream.period) {
+			GrabDataSnapshot();
+			if (myDataStream.showStreamOnce) {
+				myDataStream.period = 0;  // Show it once and then stop the stream.
+			}
+			// myDataStream.period mS passed since last time, adjust myDataStream.timeOfLastTransmission to trigger again
+			myDataStream.timeOfLastTransmission = counter1k;
+			StreamData(); // 
+		}
+	}
+}
+
+void DisplayTestResults() {
+	if (myPI.testFinished) {
+		myPI.testFinished = 0;
+		if (myPI.testFailed) {
+			TransmitString("No values passed the test.\r\n");
+			TransmitString("Try the following:\r\n");
+			TransmitString("pi-ratio 63\r\n");
+			TransmitString("run-pi-test\r\n");
+			TransmitString("pi-ratio 64\r\n");
+			TransmitString("run-pi-test\r\n");
+			TransmitString("pi-ratio 65\r\n");
+			TransmitString("run-pi-test\r\n");
+			TransmitString("Just keep going.  If nothing passes the test after you have tried pi-ratio all the way to, say, 200,\r\n");
+			TransmitString("it may be that the PI test is too stringent for your motor.  Email me at paulandsabrinasevstuff@gmail.com.\r\n");
+		}
+		else {
+			TransmitString("The test was a success.  If you are staying with this bus voltage, type 'save':\r\n");				
+			TransmitString("If you change your bus voltage, you should rerun the command 'run-pi-test'.\r\n");
+		}
+	}
+	else if (myRotorTest.testFinished) {
+		myRotorTest.testFinished = 0;
+		if (myRotorTest.maxTestSpeed < 32) { // it should be WAY  faster than this.
+			TransmitString("Your rotor test failed.\r\n");				
+		}
+		else {
+			TransmitString("Your rotor test was a success!  Type 'config' to see the new rotor time constant.\r\n");
+			TransmitString("To save the newly found rotor time constant, type 'save'.\r\n");
+		}
+	}
+	else if (myAngleOffsetTest.testFinished)  {
+		myAngleOffsetTest.testFinished = 0;
+		if (myAngleOffsetTest.testFailed == 1) {
+			TransmitString("Your angle offset test failed.\r\n");				
+		}
+		else {
+			TransmitString("Your angle offset test was a success!  Type 'config' to see the new angle offset.\r\n");
+			TransmitString("To save the newly found angle offset, type 'save'.\r\n");
+		}
+	}
+	else if (myMotorSaliencyTest.testFinished) {
+		myMotorSaliencyTest.testFinished = 0;
+		TransmitString("Motor Saliency Test Time (lower is better): ");
+		// 0         1         2         3         4         5
+		// 012345678901234567890123456789012345678901234567890123456789
+		// xxxxx\r\n
+		strcpy(intString,"xxxxx\r\n");
+		u16_to_str(&intString[0], myMotorSaliencyTest.elapsedTime, 5);	
+		TransmitString(intString);
+	}
+}
+void CheckForFaults() {
+	if (I_PORT_UNDERVOLTAGE_FAULT == 0) {  // unfortunately, this one isn't on a change notification pin, so I have to poll it this way.  Oh well.
+		faultBits |= UNDERVOLTAGE_FAULT;
+	}
+	if (faultBits & STARTUP_FAULT) {
+		if (throttle == 0) { // Make sure throttle is zero before allowing things to start.
+			faultBits &= ~STARTUP_FAULT;
+		}
+	}
+}
+
+void DisplayFaultMessages() {
+	static unsigned int notShownFaultYet = 0x0FFFF;
+	if (faultBits != 0) {
+		if ((faultBits & 1) && (notShownFaultYet & 1)) {
+			TransmitString("Throttle out of range! Is it unplugged?\r\n");
+			notShownFaultYet &= ~1;
+		}
+		if ((faultBits & 2) && (notShownFaultYet & 2)) {
+			TransmitString("Desaturation Detection Fault!  That's actually pretty bad.\r\n");
+			notShownFaultYet &= ~2;
+		}
+		if ((faultBits & 4) && (notShownFaultYet & 4)) {
+			TransmitString("UART fault.  Is the serial cable unplugged?\r\n");
+			notShownFaultYet &= ~4;
+		}
+		if ((faultBits & 8) && (notShownFaultYet & 8)) {
+			TransmitString("Undervoltage Fault.  Either your 5v or 24v supply dropped too low.\r\n");
+			notShownFaultYet &= ~8;
+		}
+		if ((faultBits & 16) && (notShownFaultYet & 16)) {
+			TransmitString("Overcurrent fault.  The hardware overcurrent protection just came on and saved the day.\r\n");
+			notShownFaultYet &= ~16;
+		}
+		if ((faultBits & 32) && (notShownFaultYet & 32)) {
+			TransmitString("Current sensor fault.  Is a current sensor unplugged?\r\n");
+			notShownFaultYet &= ~32;
+		}
+		if ((faultBits & 64) && (notShownFaultYet & 64)) {
+			TransmitString("High pedal lockout fault.  Ignore this for now.  It's not really a fault.  haha.\r\n");
+			notShownFaultYet &= ~64;
+		}
+		if ((faultBits & 128) && (notShownFaultYet & 128)) {
+			TransmitString("Rotor flux angle fault.  something weird happened with the rotor flux angle.\r\n");
+			notShownFaultYet &= ~128;
+		}
+		if ((faultBits & 256) && (notShownFaultYet & 256)) {
+			TransmitString("There was some hardware caused fault, not originating on the microcontroller (not set by me!\r\n");
+			notShownFaultYet &= ~256;
+		}
+		if ((faultBits & 512) && (notShownFaultYet & 512)) {
+			TransmitString("P I Overflow fault.  It's really not tracking IdRef and IqRef well at all.\r\n");
+			notShownFaultYet &= ~512;
+		}
+		if ((faultBits & 1024) && (notShownFaultYet & 1024)) {
+			TransmitString("PDC Fault.  I think I got rid of this one.\r\n");
+			notShownFaultYet &= ~1024;
+		}
+		if ((faultBits & 2048) && (notShownFaultYet & 2048)) {
+			TransmitString("Motor Overspeed Fault.  The motor RPM got too high!\r\n");
+			notShownFaultYet &= ~2048;
+		}
+		if ((faultBits & 4096) && (notShownFaultYet & 4096)) {
+			TransmitString("Magnetizing Current fault.  It got crazy high for some reason.\r\n");
+			notShownFaultYet &= ~4096;
+		}
+		if ((faultBits & 8192) && (notShownFaultYet & 8192)) {
+			TransmitString("Encoder cable unplugged.  I'm not using this one at the moment.\r\n");
+			notShownFaultYet &= ~8192;
+		}
+		if ((faultBits & 16384) && (notShownFaultYet & 16384)) {
+			TransmitString("\r\nI bet you just typed 'off'  haha..\r\n");
+			notShownFaultYet &= ~16384;
+		}
+	}
+}
+
+void RunMotorSaliencyTest() {
+//	currentRadiusRefRef = 200;
+	//		K = saliencyConstant[myMotorSaliencyTest.KArrayIndex]; 
+	//		currentRadiusRefRefOverSqrt2 = __builtin_mulus(46341u,currentRadiusRefRef) >> 16;
+	// IdRefRef = __builtin_mulss(-myMotorSaliencyTest.KArrayIndex,currentRadiusRefRef) >> 10; // try various negative values...  from 0 down to whatever the crap you want.
+		
+	// IdRefRef = -K + unknownTriangleLeg(K, currentRadiusRefRefOverSqrt2);
+	// IqRefRef = unknownTriangleLeg(currentRadiusRefRef, IdRefRef);
+
+	//	if (voltageDiskExceeded) {
+	//		myMotorSaliencyTest.elapsedTime = counter10k - myMotorSaliencyTest.startTime;
+	//		currentRadiusRefRef = 0;
+	//		myMotorSaliencyTest.testRunning = 0;
+	//		myMotorSaliencyTest.testFinished = 1;
+	//		currentRadiusRefRef = 0;
+	//	}
+}
+
 
 //RCON
 void __attribute__ ((__interrupt__,auto_psv)) _MathError(void) {

@@ -8,11 +8,9 @@
 #include <string.h>
 
 
-//#define PAULS_MOTOR
-//#define ANDREWS_MOTOR
-//#define AC_INDUCTION_MOTOR_CONFIG
+#define PAULS_MOTOR
+#define AC_INDUCTION_MOTOR_CONFIG
 //#define DEBUG_MODE
-//#define OREGON_MOTOR_CONTROLLER
 
 #define I_TRIS_THROTTLE 		_TRISB0
 #define I_TRIS_CURRENT1			_TRISB1
@@ -136,20 +134,24 @@
 #ifdef PAULS_MOTOR
 	#define MAX_BATTERY_AMPS_REGEN 50
 	#define MAX_BATTERY_AMPS 50
-	#ifdef AC_INDUCTION_MOTOR_CONFIG
-		#define DEFAULT_CURRENT_SENSOR_AMPS_PER_VOLT 80 //480 // default is the LEM Hass 300-s with 1 pass through.
-		#define MAX_MOTOR_AMPS 50
-		#define DEFAULT_MOTOR_TYPE AC_INDUCTION_MOTOR
-		#define DEFAULT_ENCODER_TICKS 512
-		#define DEFAULT_KP 7000//14000
-		#define DEFAULT_KI 112//226
-		#define DEFAULT_NUM_POLE_PAIRS 2
-		#define DEFAULT_PRECHARGE_TIME 10
-	#else
-		#define DEFAULT_ANGLE_OFFSET 119  // for leaf motor
+	#define DEFAULT_ANGLE_OFFSET 286 		// for Rod Hower's motor.
+//	#define DEFAULT_CURRENT_SENSOR_AMPS_PER_VOLT 120 //480 // default is the LEM Hass 300-s with 1 pass through.
+	#define DEFAULT_ROTOR_TIME_CONSTANT_INDEX 29
+
+//	#define DEFAULT_ANGLE_OFFSET 119  // for leaf motor
 //		#define DEFAULT_ANGLE_OFFSET 425 // Id = 500, Iq = 0 makes the motor stay still at this angle, and rotates with negative rpm corresponding to positive throttle with Iq = 500, Id = 0.		// FOR TOYOTA mgr
 //		#define DEFAULT_ANGLE_OFFSET 95 // Id = 500, Iq = 0 makes the motor stay still at this angle, and rotates with positive rpm corresponding to positive throttle with Iq = 500, Id = 0.		// FOR TOYOTA mgr
 
+	#ifdef AC_INDUCTION_MOTOR_CONFIG
+		#define DEFAULT_CURRENT_SENSOR_AMPS_PER_VOLT 120 //480 // default is the LEM Hass 300-s with 1 pass through.
+		#define MAX_MOTOR_AMPS 50
+		#define DEFAULT_MOTOR_TYPE AC_INDUCTION_MOTOR
+		#define DEFAULT_ENCODER_TICKS 36
+		#define DEFAULT_KP 7000//14000
+		#define DEFAULT_KI 112//226
+		#define DEFAULT_NUM_POLE_PAIRS 2
+		#define DEFAULT_PRECHARGE_TIME 50
+	#else
 		#ifdef OREGON_MOTOR_CONTROLLER
 			#define DEFAULT_CURRENT_SENSOR_AMPS_PER_VOLT 480 //480 // default is the LEM Hass 300-s with 1 pass through.
 			#define MAX_MOTOR_AMPS 50	// < 1000 ticks on scale of [-4096, 4096] = [-100amp,100amp] if using Lem Hass 50-s with one pass through.		
@@ -157,13 +159,18 @@
 			#define DEFAULT_KP 5000 //  THIS IS AT 48V for LEAF motor.
 			#define DEFAULT_KI 75   //	THIS IS AT 48V for leaf motor
 		#else		
-			#define MAX_MOTOR_AMPS 50	// < 1000 ticks on scale of [-4096, 4096] = [-100amp,100amp] if using Lem Hass 50-s with one pass through.		
-			#define DEFAULT_MOTOR_TYPE TOYOTA_MGR_MOTOR
-			#define DEFAULT_KP 4917		// 27 batteries. So, do 10/27* the 120v Kp and Ki.
-			#define DEFAULT_KI 80		// "
+			#define MAX_MOTOR_AMPS 40	
+			#define DEFAULT_MOTOR_TYPE PERMANENT_MAGNET_MOTOR_WITH_ENCODER
+//			#define DEFAULT_KP 4917		// MGR: 27 batteries. So, do 10/27* the 120v Kp and Ki.
+//			#define DEFAULT_KI 80		// MGR: "
+//			#define DEFAULT_KP 1000		// Rod Hower's motor at 48v.
+//			#define DEFAULT_KI 16		// Rod Hower's motor at 48v.
+			#define DEFAULT_KP 62
+			#define DEFAULT_KI 1
 		#endif	
-		#define DEFAULT_ENCODER_TICKS 256
-		#define DEFAULT_PRECHARGE_TIME 10
+// FOR LEAF		#define DEFAULT_ENCODER_TICKS 256
+		#define DEFAULT_ENCODER_TICKS 512
+		#define DEFAULT_PRECHARGE_TIME 20
 // 		#define DEFAULT_KP 667	// This is at 360v
 //		#define DEFAULT_KI 10	// This is at 360v
 //		#define DEFAULT_KP 2000 // This is at 120v for Leaf
@@ -177,16 +184,15 @@
 //		#define DEFAULT_KP 4917		// 27 batteries. So, do 10/27* the 120v Kp and Ki.
 //		#define DEFAULT_KI 80		// "
 
-		#define DEFAULT_NUM_POLE_PAIRS 4
+		#define DEFAULT_NUM_POLE_PAIRS 2
 	#endif
-	#define DEFAULT_ROTOR_TIME_CONSTANT_INDEX 29
 	#define DEFAULT_MAX_RPS_TIMES16 1600
 	#define DEFAULT_MAX_MECHANICAL_RPM 6000
 	#define DEFAULT_THROTTLE_TYPE 0 // 0 means either hall effect or MAX Ohms to 0 Ohm for zero throttle to max throttle.
 	#define DEFAULT_DATA_TO_DISPLAY_SET1 0b0000000000000000
 	#define DEFAULT_DATA_TO_DISPLAY_SET2 0b0000000000000000
 #else 
-	#define DEFAULT_MOTOR_TYPE AC_INDUCTION_MOTOR
+	// this is the configuration for thingstodo (my beta tester!!).  He's using a big fat induction motor with an encoder.
 	#define DEFAULT_CURRENT_SENSOR_AMPS_PER_VOLT 480//27 //480 //16 // default is the LEM Hass 50-s with 5 wraps at the moment.
 	#define MAX_MOTOR_AMPS 200
 	#define MAX_BATTERY_AMPS_REGEN 200
@@ -226,8 +232,8 @@ typedef struct {
 } SavedValuesStruct;
 
 typedef struct {
-	unsigned int angleOffset;	// the offset between the permanent magnet's "north" and the angle that the encoder index pulse happens.  in [0, 511].
-	int rotorTimeConstantIndex;  	// 0. 31 and 32 is the best for my motor. 0 corresponds to rotor time constant of 0.005 seconds.  145 corresponds to 0.150 seconds.
+	unsigned int angleOffset;	// the normalized offset between the permanent magnet's "north" and the angle that the encoder index pulse happens.  in [0, 511].
+	int rotorTimeConstantIndex;  	// 31 and 32 is the best for my motor. 0 corresponds to rotor time constant of 0.005 seconds.  145 corresponds to 0.150 seconds.
 	int numberOfPolePairs;			// number of pole pairs.  If the nameplate says around 1700RPM on a 60Hz 3 phase, then it's 2 pole pairs.  3400RPM (or so) means 1 pole pair.
 	int maxRPM;
 	int throttleType;				// 0 = hall effect or "Max Ohms to Min Ohms" if using Pot.  1 = MIN OHMS to MAX OHMS.
@@ -260,8 +266,7 @@ typedef struct {
 	// Bit  9 set: display batteryCurrent
 	// Bit  8-0 set: future use. 
 	
-	int KArrayIndex;		// from 0 to 1023.  A measure of the motor's saliency.  Near zero means almost no reluctance torque.  Near 1023 would be a pure switched reluctance motor.
-
+	int KArrayIndex;		// from 0 to 1023.  A measure of the motor's saliency.  Near zero means almost no reluctance torque.  Near 1023 would be a pure switched reluctance motor I guess...?
 	int spares[6];
 	unsigned crc;
 } SavedValuesStruct2;
@@ -296,6 +301,7 @@ typedef struct {
 	int testFinished;
 } rotorTestType;
 
+// angleOffsetTestType, motorSaliencyTestType, and firstEncoderIndexPulseTestType are all for permanent magnet motors.
 typedef struct {
 	unsigned int startTime;
 	int maxTestSpeed;

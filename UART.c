@@ -21,7 +21,12 @@ volatile UARTCommand myUARTCommand = {0,0,{0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,
 
 extern volatile int IqRefRef;
 extern volatile int IdRefRef;
+extern volatile int captureData;
+extern volatile int dataCaptureIndex;
+extern volatile int currentMaxIterationsBeforeZeroCrossing;
 
+extern volatile int vRef1;
+extern volatile int vRef2;
 extern volatile int maxRPS_times16;
 extern volatile unsigned int faultBits;
 extern volatile SavedValuesStruct savedValues;
@@ -64,6 +69,9 @@ void InitUART2() {
 	U2MODEbits.UARTEN = 1; // enable the uart
 	asm("nop");
 	U2STAbits.UTXEN = 1; // Enable transmissions
+	Nop();Nop();Nop();Nop();
+	Nop();Nop();Nop();Nop();
+	U2STAbits.OERR = 0; // ClearReceiveBuffer();
 }
 
 void __attribute__((__interrupt__, auto_psv)) _U2RXInterrupt(void) {
@@ -261,6 +269,7 @@ void ProcessCommand(void) {
 			}
 		}
 		else if (!strcmp((const char *)&myUARTCommand.string[0], "run-pi-test")) {
+			currentMaxIterationsBeforeZeroCrossing = 20;
 			myPI.testRunning = 1;
 			myPI.testFailed = 1;	
 			myPI.testFinished = 0;
@@ -268,6 +277,8 @@ void ProcessCommand(void) {
 			myPI.previousTestCompletionTime = counter10k;
 			myPI.Kp = myPI.ratioKpKi;
 			myPI.Ki = 1;
+			myPI.Kp = savedValues.Kp;
+			myPI.Ki = savedValues.Ki;
 		}
 		else if (!strcmp((const char *)&myUARTCommand.string[0], "run-rotor-test")) {
 			if (savedValues.motorType == 1) {		
@@ -556,13 +567,14 @@ void ProcessCommand(void) {
 //				currentRadiusRefRef = 0;
 			}
 			else if (myPI.testRunning) { // Stop the PI test if it was running.
-				myPI.testRunning = 0;
+				currentMaxIterationsBeforeZeroCrossing = 20;
+				InitPIStruct();
 				myPI.testFailed = 1;
 				myPI.testFinished = 1;
 //				currentRadiusRefRef = 0;
 			}
 			if (myAngleOffsetTest.testRunning) {  // Stop the rotor test if it was running, and just keep the best value of the rotor time constant that you had found up to this point.
-				savedValues2.angleOffset = myAngleOffsetTest.bestAngleOffset;
+				savedValues2.angleOffset = myAngleOffsetTest.currentAngleOffset;
 				myAngleOffsetTest.testRunning = 0;
 				myAngleOffsetTest.testFinished = 1;
 //				currentRadiusRefRef = 0;
@@ -587,17 +599,24 @@ void ProcessCommand(void) {
 			}
 		}
 		else if (!strcmp((const char*)&myUARTCommand.string[0], "4")) {
-			if (myMotorSaliencyTest.KArrayIndex < 1023-10) {
-				myMotorSaliencyTest.KArrayIndex+=10;
-				savedValues2.KArrayIndex = myMotorSaliencyTest.KArrayIndex;  	// this is the working copy.
-			}
+			vRef1++;
+//			if (myMotorSaliencyTest.KArrayIndex < 1023-10) {
+//				myMotorSaliencyTest.KArrayIndex+=10;
+//				savedValues2.KArrayIndex = myMotorSaliencyTest.KArrayIndex;  	// this is the working copy.
+//			}
 		}
 		else if (!strcmp((const char*)&myUARTCommand.string[0], "3")) {
-			if (myMotorSaliencyTest.KArrayIndex >= 10) {
-				myMotorSaliencyTest.KArrayIndex-=10;
-				savedValues2.KArrayIndex = myMotorSaliencyTest.KArrayIndex;  	// this is the working copy.
-			}
+			vRef1--;
+//			if (myMotorSaliencyTest.KArrayIndex >= 10) {
+//				myMotorSaliencyTest.KArrayIndex-=10;
+//				savedValues2.KArrayIndex = myMotorSaliencyTest.KArrayIndex;  	// this is the working copy.
+//			}
 		}
+		else if (!strcmp((const char*)&myUARTCommand.string[0], "c")) {
+			dataCaptureIndex = 0;
+			captureData = 1;
+		}
+
 
 		else if (!strcmp((const char *)&myUARTCommand.string[0], "?")) {  // show the valid list of commands
 			TransmitString("List of valid commands:\r\n");
