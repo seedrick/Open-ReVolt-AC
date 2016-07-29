@@ -12,9 +12,7 @@ The first step is building the controller. Do do this you need two things:
 Solder the components in while checking against the schematics in the /Hardware directory.
 
 
-//TODO: All of the following list
-
-Stuff to document:
+[//TODO: Stuff to document:
 
 -Basic hardware setup
 
@@ -52,4 +50,4 @@ Stuff to document:
 
 -commands
 
--parameters
+-parameters]
