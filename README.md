@@ -63,6 +63,14 @@ Solder the components in while checking against the schematics in the /Hardware 
 
 --pre-charge resistor
 
+--pre-charge relay
+
+--copper sheets
+
+--nomex sheets
+
+--24 V out DC-DC
+
 --throttle
 
 --at least 1 fuse @ pack voltage
