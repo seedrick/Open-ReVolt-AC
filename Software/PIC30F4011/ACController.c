@@ -1860,25 +1860,25 @@ void RunPITest() {
 	}
 }
 
-void RunPITest2() {
-	if ((counter10k - myPI.previousTestCompletionTime) < 1000) {  // wait 0.1 seconds between tests.  That gives Id and Iq a chance to go back to zero.
-		IdRef = 0;
-		IqRef = 0;
-	}
-	else {  // I'm running the PI loop test on a particular Kp and Ki to see if it passes the convergence test below.
-		IdRef = 0;  // 512 on a scale of 0 to 4096 corresponds to 75 amps for a LEM Hass 300-s.  Because 4096 means 600amps.
-		IqRef = 511;
-		bigArray1[myPI.iteration] = myPI.error_d;
-		bigArray2[myPI.iteration] = myPI.error_q;
-		if (myPI.iteration < 254) {
-			myPI.iteration++;
-		}
-		else {
-			InitPIStruct();
-			myPI.testFinished = 1;
-		}
-	}
-}
+//void RunPITest2() {
+//	if ((counter10k - myPI.previousTestCompletionTime) < 1000) {  // wait 0.1 seconds between tests.  That gives Id and Iq a chance to go back to zero.
+//		IdRef = 0;
+//		IqRef = 0;
+//	}
+//	else {  // I'm running the PI loop test on a particular Kp and Ki to see if it passes the convergence test below.
+//		IdRef = 0;  // 512 on a scale of 0 to 4096 corresponds to 75 amps for a LEM Hass 300-s.  Because 4096 means 600amps.
+//		IqRef = 511;
+//		bigArray1[myPI.iteration] = myPI.error_d;
+//		bigArray2[myPI.iteration] = myPI.error_q;
+//		if (myPI.iteration < 254) {
+//			myPI.iteration++;
+//		}
+//		else {
+//			InitPIStruct();
+//			myPI.testFinished = 1;
+//		}
+//	}
+//}
 
 // In here we get the torque command from the throttle and limit it based on temperature and battery current. It doesn't have to be computed very frequently.  every 128 times is no more than 78Hz.
 void GetCurrentRadiusRefRef() {
