@@ -31,57 +31,77 @@ drivers.
 -Communication - RS-232, ISP.
 
 #Getting Started
+
+##Purchasing:
+
 The first step is building the controller. Do do this you need two things:
 
 -PCB (available at http://www.paulandsabrinasevstuff.com/onlinestore.html#!/3-Phase-UNPOPULATED-AC-Control-Driver-Board/p/59121591/category=16287307)
 
--Parts (pre-generated Mouser cart available at http://www.mouser.com/tools/projectcartsharing.aspx, Access ID: 692b28f5b8)
+-Board parts (BOM in /Hardware directory)
+
+There are also other things required to get running or just test the controller.
+
+-Extra hardware:
+
+	-PICKit2/3 or comparable Microchip ISP
+	
+	-AVRISP MkII or comparable Atmel ISP
+	
+	-1 ACIM/PMSM/BLDC/IPM motor
+	
+	-1 Motor quadrature encoder
+	
+	-1 battery/battery pack for motor
+	
+	-1 battery/battery pack for controller
+	
+	-1 battery charger
+	
+	-24V out DC/DC converter for controller
+	
+	-1 potentiometer or hall effect throttle (this will affect R51's value, use 100k for hall 2k for potetiometer)
+	
+	-1 Hass LEM current sensor per phase (a total of 3, check datasheets and compare current ranges to suit your needs)
+	
+	-3 IGBT half-bridges with heatsinks
+	
+	-1 DC link capacitor (power ring configuraiton highly recommended)
+	
+	-1 pre-charge resistor (value will be based on pre-charge time, see math below)
+	
+	-1 pre-charge relay (AC relay OK)
+	
+	-1 Contactor
+	
+	-1 + Fuse
+	
+	-Copper sheets (???)
+	
+	-Nomex sheets (???)	
+	
+	-Large diamater cables (motor --> controller [red], battery --> controller [orange])
+	
+	-Serial cable for RS-232 communication
+	
+	-Inertia switches for emergency shut-off
+	
+	-1 breadboard
+	
+	
 
 
-Solder the components in while checking against the schematics in the /Hardware directory.
+##Build:
+
+1) The ATTiny has no ports for a programmer once soldered on, meaning it has to be flashed on a breadboard before being soldered in. Use the latest verison Atmel Studio to compile "\Software\ATTiny25\ATTiny25.c" the and your ISP to transfer the compiled .hex file to the ATTiny25.
+
+
+2) Solder the components in while checking against the schematics in the /Hardware directory (NEEDS UPDATED!!!). Also check the datasheets for component polarity.
 
 
 [//TODO: Stuff to document:
 
 -Basic hardware setup
-
---quadrature encoder
-
---1 current sensor per phase
-
---PMAC motor
-
---battery pack
-
---charger
-
---switches (ideally IGBT)
-
---heatsink for switches
-
---capacitor
-
---pre-charge resistor
-
---pre-charge relay
-
---copper sheets
-
---nomex sheets
-
---24 V out DC-DC
-
---throttle
-
---at least 1 fuse @ pack voltage
-
---contactor (batt to controller)
-
---big cables (motor --> controller [red], battery --> controller [orange])
-
---serial cable
-
---inertia switches
 
 -basic flow for main contorller loop
 
