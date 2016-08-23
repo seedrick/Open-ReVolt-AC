@@ -1911,9 +1911,9 @@ void GetCurrentRadiusRefRef() {
 			batteryCurrentSum = 0;
 		
 			// Is there a throttle fault?
-//			if (throttle <= savedValues.throttleFaultPosition) {
-//				faultBits |= THROTTLE_FAULT;
-//			}
+			if (throttle <= savedValues.throttleFaultPosition) {
+				faultBits |= THROTTLE_FAULT;
+			}
 			if (savedValues2.throttleType == 1) {  // 0-5k pot sort of thing rather than hall effect.
 				throttle = 1023 - throttle;  // invert it.
 			}
