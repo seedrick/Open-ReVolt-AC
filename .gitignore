@@ -1,0 +1,7 @@
+avrdude
+GccApplication1
+OpenRevolt-AC.X
+Software/PIC30F4011/Makefile
+Software/ATTiny25/avrdude.conf
+Software/ATTiny25/avrdude.exe
+Software/ATTiny25/GccApplication1.hex

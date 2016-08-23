@@ -10,7 +10,7 @@
 
 #define PAULS_MOTOR
 #define AC_INDUCTION_MOTOR_CONFIG
-//#define DEBUG_MODE
+#define DEBUG_MODE
 
 #define I_TRIS_THROTTLE 		_TRISB0
 #define I_TRIS_CURRENT1			_TRISB1
